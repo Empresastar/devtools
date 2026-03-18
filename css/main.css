@@ -1,0 +1,46 @@
+/* Estilo Minimalista Rubi */
+body {
+    background-color: #0f0f0f; /* Fundo escuro */
+    color: #ffffff;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.container {
+    text-align: center;
+}
+
+h1 {
+    color: #e0115f; /* Cor Rubi Original */
+    font-size: 3rem;
+    text-shadow: 0 0 15px rgba(224, 17, 95, 0.6);
+    margin-bottom: 10px;
+}
+
+.card {
+    background: #1e1e1e;
+    padding: 30px;
+    border-radius: 15px;
+    border: 1px solid #e0115f;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+button {
+    background-color: #e0115f;
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: transform 0.2s;
+}
+
+button:hover {
+    transform: scale(1.05);
+    background-color: #ff1a75;
+}
