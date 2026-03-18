@@ -4,24 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meu VS Code URL Scanner</title>
-    <link rel="stylesheet" href="./assets/css/main.css">
+    <link rel="stylesheet" href="assets/css/main.css">
 </head>
 <body>
 
     <div id="app-container">
         <aside id="sidebar">
             <div class="sidebar-header">
-                <span>EXPLORER (v1.1)</span>
+                <span>EXPLORER</span>
             </div>
             <div class="url-input-container">
-                <input type="text" id="url-input" placeholder="https://exemplo.com">
+                <input type="text" id="url-input" placeholder="Cole a URL aqui (ex: https://google.com)">
                 <button id="btn-scan">Scan</button>
             </div>
             <nav id="file-tree">
                 <div class="folder-root">1. PROJETO-RAIZ</div>
                 <div id="tree-content">
-                    <div class="file-info">Aguardando Scan...</div>
-                </div>
+                    </div>
             </nav>
         </aside>
 
@@ -29,23 +28,19 @@
             <header id="tabs-bar">
                 <div class="tab active" id="tab-title">index.html</div>
             </header>
-            <div id="monaco-editor"></div>
+            <div id="monaco-editor" style="height: calc(100vh - 35px);"></div>
         </main>
 
         <section id="preview-panel">
             <div class="preview-header">LIVE PREVIEW</div>
-            <iframe id="preview-frame"></iframe>
+            <iframe id="preview-frame" style="width: 100%; height: 100%; border: none; background: white;"></iframe>
         </section>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs/loader.min.js"></script>
     
-    <script src="./assets/js/monaco-init.js" onerror="console.error('ERRO: monaco-init.js não encontrado!')"></script>
-    <script src="./assets/js/scanner.js" onerror="console.error('ERRO: scanner.js não encontrado!')"></script>
-    <script src="./assets/js/app.js" onerror="console.error('ERRO: app.js não encontrado!')"></script>
-
-    <script>
-        console.log("Tentando carregar arquivos de: " + window.location.href);
-    </script>
+    <script src="assets/js/monaco-init.js"></script>
+    <script src="assets/js/scanner.js"></script>
+    <script src="assets/js/app.js"></script>
 </body>
 </html>
