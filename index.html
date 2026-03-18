@@ -2,50 +2,199 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Rubi Code | VS Code Edition</title>
-    <link rel="stylesheet" href="css/editor.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rubi Code | VS Code P2P</title>
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.1/min/vs/loader.min.js"></script>
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+
+    <style>
+        /* CSS INTEGRADO - Estilo VS Code Original */
+        * { box-sizing: border-box; }
+        body, html { margin: 0; padding: 0; height: 100%; background: #1e1e1e; color: #fff; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
+
+        #vs-code-container { display: flex; height: 100vh; }
+
+        /* Barra Lateral de Ícones (Activity Bar) */
+        #activity-bar { width: 50px; background: #333333; display: flex; flex-direction: column; align-items: center; padding-top: 15px; gap: 20px; }
+        .action-icon { font-size: 20px; cursor: pointer; opacity: 0.6; transition: 0.3s; }
+        .action-icon:hover { opacity: 1; }
+        .action-icon.active { opacity: 1; border-left: 2px solid #e0115f; width: 100%; text-align: center; }
+
+        /* Sidebar (Explorador) */
+        #sidebar { width: 260px; background: #252526; display: flex; flex-direction: column; border-right: 1px solid #333; }
+        .sidebar-header { padding: 10px 20px; font-size: 11px; font-weight: bold; color: #bbb; letter-spacing: 1px; }
+        
+        .btn-main { background: #e0115f; color: white; border: none; margin: 10px; padding: 10px; cursor: pointer; font-weight: bold; border-radius: 3px; }
+        .btn-main:hover { background: #ff1a75; }
+
+        .p2p-card { background: #333; margin: 10px; padding: 10px; border-radius: 4px; font-size: 11px; border: 1px solid #444; }
+        #meu-id { color: #00ffcc; font-family: monospace; font-size: 12px; margin: 5px 0; word-break: break-all; }
+        input { width: 100%; background: #3c3c3c; border: 1px solid #555; color: white; padding: 8px; margin-top: 5px; border-radius: 2px; }
+
+        /* Lista de Arquivos */
+        .file-tree { flex-grow: 1; overflow-y: auto; }
+        #lista-arquivos { list-style: none; padding: 0; margin: 0; }
+        #lista-arquivos li { padding: 6px 20px; font-size: 13px; cursor: pointer; transition: 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        #lista-arquivos li:hover { background: #2a2d2e; }
+
+        /* Área do Editor */
+        #editor-section { flex-grow: 1; display: flex; flex-direction: column; }
+        #tabs { height: 35px; background: #252526; display: flex; align-items: flex-end; border-bottom: 1px solid #1e1e1e; }
+        .tab { padding: 8px 20px; background: #2d2d2d; font-size: 12px; border-right: 1px solid #1e1e1e; color: #969696; cursor: default; }
+        .tab.active { background: #1e1e1e; color: #fff; border-top: 1px solid #e0115f; }
+
+        #editor-container { flex-grow: 1; width: 100%; }
+
+        /* Barra de Status */
+        #statusbar { height: 22px; background: #e0115f; display: flex; justify-content: space-between; align-items: center; padding: 0 10px; font-size: 12px; font-weight: 500; }
+    </style>
 </head>
 <body>
 
     <div id="vs-code-container">
         <aside id="activity-bar">
-            <div class="icon active">📄</div>
-            <div class="icon">🔍</div>
-            <div class="icon">🌿</div>
-            <div class="icon">🛠️</div>
+            <div class="action-icon active">📄</div>
+            <div class="action-icon">🔍</div>
+            <div class="action-icon">🌿</div>
+            <div class="action-icon">⚙️</div>
         </aside>
 
         <aside id="sidebar">
-            <div class="sidebar-title">EXPLORADOR</div>
+            <div class="sidebar-header">EXPLORADOR: RUBI</div>
             
-            <button id="btn-abrir-pasta" class="action-btn">ABRIR PASTA</button>
+            <button id="btn-abrir-pasta" class="btn-main">📁 ABRIR PASTA DO PC</button>
 
-            <div class="p2p-info">
-                <span>MEU ID:</span>
-                <div id="meu-id">...</div>
-                <input type="text" id="id-amigo-input" placeholder="ID do Host">
-                <button id="btn-conectar">CONECTAR</button>
+            <div class="p2p-card">
+                <strong>SEU ID (HOST):</strong>
+                <div id="meu-id">Gerando...</div>
+                <input type="text" id="id-amigo-input" placeholder="ID do Amigo">
+                <button id="btn-conectar" style="width:100%; margin-top:5px; background:#444; color:white; border:none; padding:5px; cursor:pointer;">CONECTAR</button>
             </div>
 
             <nav class="file-tree">
-                <ul id="lista-arquivos"></ul>
+                <ul id="lista-arquivos">
+                    <li style="color:#666; font-style:italic;">Nenhuma pasta aberta</li>
+                </ul>
             </nav>
         </aside>
 
         <main id="editor-section">
             <div id="tabs">
-                <div class="tab active" id="tab-name">projeto-rubi</div>
+                <div class="tab active" id="current-file">bem-vindo.js</div>
             </div>
             <div id="editor-container"></div>
             <div id="statusbar">
-                <div id="status-text">Pronto</div>
-                <div>UTF-8 | JavaScript</div>
+                <div id="status-left">Pronto</div>
+                <div id="status-right">UTF-8 | JavaScript</div>
             </div>
         </main>
     </div>
 
-    <script src="js/main.js"></script>
+    <script>
+        /* JAVASCRIPT INTEGRADO */
+        window.onload = () => {
+            const peer = new Peer();
+            let conn;
+            let editor;
+            let isLocalChange = true;
+
+            // 1. Inicializar o Monaco Editor com Cores
+            require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.1/min/vs' }});
+            require(['vs/editor/editor.main'], function() {
+                editor = monaco.editor.create(document.getElementById('editor-container'), {
+                    value: "// 💎 Rubi Code\n// 1. Abra uma pasta no botão acima\n// 2. Compartilhe seu ID P2P",
+                    language: 'javascript',
+                    theme: 'vs-dark',
+                    automaticLayout: true,
+                    fontSize: 14,
+                    renderWhitespace: "all"
+                });
+
+                // Sincronização ao digitar
+                editor.onDidChangeModelContent(() => {
+                    if (isLocalChange && conn && conn.open) {
+                        conn.send({ type: 'EDIT', content: editor.getValue() });
+                    }
+                });
+            });
+
+            // 2. Abrir Pasta do Computador (API File System)
+            document.getElementById('btn-abrir-pasta').onclick = async () => {
+                try {
+                    const dirHandle = await window.showDirectoryPicker();
+                    const listaUI = document.getElementById('lista-arquivos');
+                    listaUI.innerHTML = "";
+                    let arquivosParaEnviar = [];
+
+                    for await (const entry of dirHandle.values()) {
+                        if (entry.kind === 'file') {
+                            arquivosParaEnviar.push(entry.name);
+                            const li = document.createElement('li');
+                            li.innerText = "📄 " + entry.name;
+                            li.onclick = async () => {
+                                const file = await entry.getFile();
+                                const text = await file.text();
+                                abrirArquivoNoEditor(entry.name, text);
+                                if (conn) conn.send({ type: 'OPEN', name: entry.name, content: text });
+                            };
+                            listaUI.appendChild(li);
+                        }
+                    }
+                    if (conn) conn.send({ type: 'LIST', files: arquivosParaEnviar });
+                } catch (e) { console.log("Acesso à pasta negado."); }
+            };
+
+            function abrirArquivoNoEditor(nome, conteudo) {
+                isLocalChange = false;
+                const ext = nome.split('.').pop();
+                let lang = 'javascript';
+                if(ext === 'html') lang = 'html';
+                if(ext === 'css') lang = 'css';
+                
+                monaco.editor.setModelLanguage(editor.getModel(), lang);
+                editor.setValue(conteudo);
+                document.getElementById('current-file').innerText = nome;
+                document.getElementById('status-right').innerText = `UTF-8 | ${lang.toUpperCase()}`;
+                isLocalChange = true;
+            }
+
+            // 3. Lógica P2P (PeerJS)
+            peer.on('open', id => {
+                document.getElementById('meu-id').innerText = id;
+            });
+
+            peer.on('connection', c => {
+                conn = c;
+                document.getElementById('status-left').innerText = "Amigo Conectado";
+                setupReceiver();
+            });
+
+            document.getElementById('btn-conectar').onclick = () => {
+                const id = document.getElementById('id-amigo-input').value;
+                conn = peer.connect(id);
+                document.getElementById('status-left').innerText = "Conectando...";
+                setupReceiver();
+            };
+
+            function setupReceiver() {
+                conn.on('data', (data) => {
+                    isLocalChange = false;
+                    if (data.type === 'EDIT' || data.type === 'OPEN') {
+                        editor.setValue(data.content);
+                        if(data.name) document.getElementById('current-file').innerText = data.name;
+                    }
+                    if (data.type === 'LIST') {
+                        const listaUI = document.getElementById('lista-arquivos');
+                        listaUI.innerHTML = data.files.map(f => `<li>📄 ${f}</li>`).join('');
+                    }
+                    isLocalChange = true;
+                });
+                conn.on('open', () => {
+                    document.getElementById('status-left').innerText = "Sincronizado";
+                });
+            }
+        };
+    </script>
 </body>
 </html>
