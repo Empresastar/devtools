@@ -2,38 +2,50 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Rubi Code | VS Code P2P Original</title>
+    <title>Rubi Code | VS Code Edition</title>
     <link rel="stylesheet" href="css/editor.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.1/min/vs/loader.min.js"></script>
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
 </head>
 <body>
-    <div id="app">
-        <aside id="sidebar">
-            <div class="logo">💎 Rubi Code</div>
-            
-            <button id="btn-abrir-pasta">📁 Abrir Pasta do Projeto</button>
 
-            <div class="box">
-                <strong>MEU ID (Host):</strong>
-                <div id="meu-id">Gerando...</div>
-            </div>
-
-            <div class="box">
-                <input type="text" id="id-amigo-input" placeholder="ID do Host">
-                <button id="btn-conectar">ENTRAR NO PROJETO</button>
-            </div>
-
-            <nav class="file-explorer">
-                <p>EXPLORADOR</p>
-                <ul id="lista-arquivos"></ul>
-            </nav>
-
-            <div id="status">Status: Offline</div>
+    <div id="vs-code-container">
+        <aside id="activity-bar">
+            <div class="icon active">📄</div>
+            <div class="icon">🔍</div>
+            <div class="icon">🌿</div>
+            <div class="icon">🛠️</div>
         </aside>
 
-        <main id="editor-container"></main>
+        <aside id="sidebar">
+            <div class="sidebar-title">EXPLORADOR</div>
+            
+            <button id="btn-abrir-pasta" class="action-btn">ABRIR PASTA</button>
+
+            <div class="p2p-info">
+                <span>MEU ID:</span>
+                <div id="meu-id">...</div>
+                <input type="text" id="id-amigo-input" placeholder="ID do Host">
+                <button id="btn-conectar">CONECTAR</button>
+            </div>
+
+            <nav class="file-tree">
+                <ul id="lista-arquivos"></ul>
+            </nav>
+        </aside>
+
+        <main id="editor-section">
+            <div id="tabs">
+                <div class="tab active" id="tab-name">projeto-rubi</div>
+            </div>
+            <div id="editor-container"></div>
+            <div id="statusbar">
+                <div id="status-text">Pronto</div>
+                <div>UTF-8 | JavaScript</div>
+            </div>
+        </main>
     </div>
+
     <script src="js/main.js"></script>
 </body>
 </html>
