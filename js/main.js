@@ -1,50 +1,41 @@
 window.onload = async () => {
-    // 1. Inicia o Editor
+    let isRemoteChange = false; // Trava para evitar loop infinito de mensagens
+
     await EditorModule.init('monaco-editor');
 
-    // 2. Inicia P2P e define o que fazer ao receber dados
     P2PModule.init((data) => {
         if (data.type === 'EDIT') {
+            isRemoteChange = true; // Avisa que a mudança veio de fora
             const currentPos = EditorModule.instance.getPosition();
             EditorModule.instance.setValue(data.content);
             EditorModule.instance.setPosition(currentPos);
+            isRemoteChange = false;
         }
         if (data.type === 'OPEN_FILE') {
+            isRemoteChange = true;
             EditorModule.instance.setValue(data.content);
             EditorModule.setLanguage(data.name);
             document.getElementById('active-filename').innerText = data.name;
+            isRemoteChange = false;
         }
     });
 
-    // 3. Botão Abrir Pasta (Usa a FilesModule que você já tem)
-    const btnFolder = document.getElementById('open-folder-btn');
-    if (btnFolder) {
-        btnFolder.onclick = () => FilesModule.openFolder();
-    }
+    // Configuração dos Botões
+    document.getElementById('open-folder-btn').onclick = () => FilesModule.openFolder();
+    document.getElementById('preview-btn').onclick = () => EditorModule.runPreview();
+    
+    document.getElementById('connect-btn').onclick = () => {
+        const inputId = document.getElementById('peer-id-input').value;
+        P2PModule.connect(inputId, (data) => { /* Processa igual ao init */ });
+    };
 
-    // 4. Botão Preview
-    const btnPreview = document.getElementById('preview-btn');
-    if (btnPreview) {
-        btnPreview.onclick = () => EditorModule.runPreview();
-    }
-
-    // 5. Botão Conectar
-    const btnConnect = document.getElementById('connect-btn');
-    if (btnConnect) {
-        btnConnect.onclick = () => {
-            const inputId = document.getElementById('peer-id-input').value;
-            P2PModule.connect(inputId, (data) => {
-                // Aqui processa os mesmos dados recebidos acima
-            });
-        };
-    }
-
-    // 6. SINCRONIZAÇÃO EM TEMPO REAL
-    // Sempre que você digitar, envia o texto pro amigo
+    // SINCRONIZAÇÃO: Envia o código se a mudança for LOCAL (você digitando)
     EditorModule.instance.onDidChangeModelContent(() => {
-        P2PModule.send({
-            type: 'EDIT',
-            content: EditorModule.instance.getValue()
-        });
+        if (!isRemoteChange) {
+            P2PModule.send({
+                type: 'EDIT',
+                content: EditorModule.instance.getValue()
+            });
+        }
     });
 };
