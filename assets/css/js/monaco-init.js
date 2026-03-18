@@ -8,7 +8,8 @@ require(['vs/editor/editor.main'], function() {
         language: 'html',
         theme: 'vs-dark',
         automaticLayout: true,
-        fontSize: 14
+        fontSize: 14,
+        minimap: { enabled: false }
     });
-    console.log("Monaco OK!");
+    console.log("Editor Monaco Carregado");
 });
