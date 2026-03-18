@@ -2,24 +2,22 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>SISTEMA QUÂNTICO - MOTOR BRUTO V4</title>
+    <title>SISTEMA QUÂNTICO V5 - ANTI-CORS</title>
     <style>
-        :root { --bg: #0d1117; --sidebar: #010409; --accent: #79c0ff; --folder: #d29922; }
+        :root { --bg: #0d1117; --sidebar: #010409; --accent: #79c0ff; }
         body { background: var(--bg); color: #c9d1d9; font-family: 'Fira Code', monospace; margin: 0; overflow: hidden; }
-        #app { display: flex; height: 100vh; width: 100vw; }
+        #app { display: flex; height: 100vh; }
         #side { width: 320px; background: var(--sidebar); border-right: 1px solid #30363d; display: flex; flex-direction: column; }
-        .input-section { padding: 15px; background: #161b22; border-bottom: 1px solid #30363d; }
-        input { width: 100%; background: #0d1117; border: 1px solid #30363d; color: var(--accent); padding: 10px; border-radius: 6px; outline: none; box-sizing: border-box; margin-bottom: 10px; }
+        .input-section { padding: 15px; background: #161b22; }
+        input { width: 100%; background: #0d1117; border: 1px solid #30363d; color: var(--accent); padding: 10px; border-radius: 6px; outline: none; margin-bottom: 10px; box-sizing: border-box; }
         button { width: 100%; background: #238636; color: white; border: none; padding: 12px; cursor: pointer; font-weight: bold; border-radius: 6px; }
-        button:hover { background: #2ea043; box-shadow: 0 0 15px rgba(46, 160, 67, 0.4); }
-        .tree { overflow-y: auto; flex: 1; padding: 10px; }
-        .folder { color: var(--folder); font-size: 11px; font-weight: bold; margin: 15px 0 5px 0; text-transform: uppercase; }
-        .item { padding: 6px 10px; cursor: pointer; font-size: 12px; border-radius: 4px; display: flex; align-items: center; gap: 8px; color: #8b949e; }
+        #tree { flex: 1; overflow-y: auto; padding: 10px; font-size: 12px; }
+        .folder { color: #d29922; font-weight: bold; margin: 15px 0 5px 0; text-transform: uppercase; font-size: 10px; }
+        .item { padding: 6px 10px; cursor: pointer; border-radius: 4px; color: #8b949e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .item:hover { background: #21262d; color: white; }
         .item.active { background: #1f6feb; color: white; }
         #editor-cont { flex: 1; display: flex; flex-direction: column; }
-        #monaco-editor { flex: 1; border-top: 1px solid #30363d; }
-        #tabs { height: 40px; background: #161b22; display: flex; align-items: center; padding-left: 15px; font-size: 12px; color: var(--accent); border-bottom: 1px solid #30363d; }
+        #monaco-editor { flex: 1; }
         #preview { width: 400px; background: white; border-left: 1px solid #30363d; }
     </style>
 </head>
@@ -29,16 +27,14 @@
     <aside id="side">
         <div class="input-section">
             <input type="text" id="target-url" placeholder="https://exemplo.com">
-            <button id="scan-btn">DISPARAR VARREDURA BRUTA</button>
+            <button id="scan-btn">DISPARAR VARREDURA</button>
+            <div id="log" style="font-size: 10px; color: #f85149; margin-top: 5px;"></div>
         </div>
-        <div class="tree" id="tree-root"></div>
+        <div id="tree"></div>
     </aside>
-
     <main id="editor-cont">
-        <div id="tabs"><span id="current-file">CONSOLE QUÂNTICO ATIVO</span></div>
         <div id="monaco-editor"></div>
     </main>
-
     <section id="preview">
         <iframe id="view-frame" style="width:100%; height:100%; border:none;"></iframe>
     </section>
@@ -48,72 +44,76 @@
 
 <script>
     let editor, vfs = {};
+    const log = document.getElementById('log');
 
-    // Configuração do Monaco sem conflitos
+    // LISTA DE TÚNEIS (PROXIES) PARA PULAR O CORS
+    const proxyList = [
+        u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,
+        u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+        u => `https://thingproxy.freeboard.io/fetch/${u}`
+    ];
+
     require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs' }});
-    
-    // Carregamos o editor primeiro
     require(['vs/editor/editor.main'], function() {
         editor = monaco.editor.create(document.getElementById('monaco-editor'), {
-            value: "/* SISTEMA PRONTO PARA VARREDURA */",
-            language: 'javascript',
-            theme: 'vs-dark',
-            automaticLayout: true,
-            fontSize: 14
+            value: "// MOTOR PRONTO\n// SE O SITE FOR PROTEGIDO (EX: DISCORD), O PROXY PODE FALHAR.",
+            language: 'html', theme: 'vs-dark', automaticLayout: true
         });
     });
 
-    // Função de fetch que tenta pular o CORS de forma bruta
-    async function bruteFetch(url) {
-        // Usando um proxy que costuma ser mais resiliente
-        const p = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-        try {
-            const res = await fetch(p);
-            const data = await res.json();
-            return data.contents;
-        } catch(e) {
-            console.error("Erro no túnel quântico:", e);
-            return null;
+    async function smartFetch(url) {
+        for (let getProxy of proxyList) {
+            try {
+                log.innerText = "Tentando túnel...";
+                const res = await fetch(getProxy(url));
+                if (!res.ok) continue;
+                
+                const data = await res.json();
+                // Alguns proxies retornam o HTML direto, outros dentro de .contents
+                return data.contents || data;
+            } catch (e) {
+                continue;
+            }
         }
+        return null;
     }
 
     document.getElementById('scan-btn').onclick = async () => {
         const url = document.getElementById('target-url').value;
         if(!url) return;
+        
+        document.getElementById('scan-btn').innerText = "ATROPELANDO CORS...";
+        const raw = await smartFetch(url);
 
-        document.getElementById('scan-btn').innerText = "MAPEANDO...";
-        const raw = await bruteFetch(url);
-
-        if(!raw) {
-            alert("BLOQUEIO DETECTADO! O site alvo não permite a varredura via Proxy comum.");
-            document.getElementById('scan-btn').innerText = "VARREDURA BRUTA";
+        if(!raw || typeof raw !== 'string') {
+            log.innerText = "BLOQUEIO TOTAL: O site alvo é imune a proxies públicos.";
+            document.getElementById('scan-btn').innerText = "SCAN";
             return;
         }
 
+        log.innerText = "Sucesso!";
         vfs = { '10. index.html': { c: raw, l: 'html' }, css: {}, js: {} };
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(raw, 'text/html');
-
-        // Mapeia CSS e JS (BRUTO)
+        
+        // Mapeamento Simples
+        const doc = new DOMParser().parseFromString(raw, 'text/html');
         doc.querySelectorAll('link[rel="stylesheet"]').forEach((el, i) => {
-            vfs.css[`11. style_${i+1}.css`] = { c: `/* Link: ${el.href} */`, l: 'css' };
+            vfs.css[`11. style_${i+1}.css`] = { c: `/* CSS de: ${el.href} */`, l: 'css' };
         });
         doc.querySelectorAll('script[src]').forEach((el, i) => {
-            vfs.js[`12. script_${i+1}.js`] = { c: `// Source: ${el.src}`, l: 'javascript' };
+            vfs.js[`12. script_${i+1}.js`] = { c: `// JS de: ${el.src}`, l: 'javascript' };
         });
 
         renderTree();
         editor.setValue(raw);
-        monaco.editor.setModelLanguage(editor.getModel(), 'html');
         document.getElementById('view-frame').srcdoc = raw;
-        document.getElementById('scan-btn').innerText = "SCAN COMPLETO";
+        document.getElementById('scan-btn').innerText = "SCAN";
     };
 
     function renderTree() {
-        const tree = document.getElementById('tree-root');
-        tree.innerHTML = `<div class="folder">10. RAIZ</div>`;
+        const tree = document.getElementById('tree');
+        tree.innerHTML = `<div class="folder">10. ROOT</div>`;
         createItem('index.html', '10. index.html', 'html', 'root');
-
+        
         if(Object.keys(vfs.css).length) {
             tree.innerHTML += `<div class="folder">11. ESTILOS</div>`;
             Object.keys(vfs.css).forEach(k => createItem(k, k, 'css', 'css'));
@@ -129,14 +129,11 @@
         div.className = 'item';
         div.innerText = label;
         div.onclick = () => {
-            document.querySelectorAll('.item').forEach(i => i.classList.remove('active'));
-            div.classList.add('active');
             let code = (type === 'root') ? vfs['10. index.html'].c : vfs[type][key].c;
             editor.setValue(code);
             monaco.editor.setModelLanguage(editor.getModel(), lang);
-            document.getElementById('current-file').innerText = label.toUpperCase();
         };
-        tree.appendChild(div);
+        document.getElementById('tree').appendChild(div);
     }
 </script>
 </body>
