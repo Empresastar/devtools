@@ -2,22 +2,22 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DevTools VS Code - Fix</title>
+    <title>DevTools VS Code - Edição Única</title>
     <style>
         body { background: #1e1e1e; color: white; font-family: 'Segoe UI', sans-serif; margin: 0; overflow: hidden; }
         #app-container { display: flex; height: 100vh; width: 100vw; }
-        #sidebar { width: 260px; background: #252526; border-right: 1px solid #333; display: flex; flex-direction: column; }
+        #sidebar { width: 280px; background: #252526; border-right: 1px solid #333; display: flex; flex-direction: column; }
         #editor-wrapper { flex: 1; display: flex; flex-direction: column; }
         #monaco-editor { flex: 1; }
         #preview-panel { width: 450px; background: white; border-left: 1px solid #333; }
         .url-input-container { padding: 10px; display: flex; gap: 5px; background: #2d2d2d; }
         input { background: #3c3c3c; border: 1px solid #555; color: white; padding: 8px; flex: 1; font-size: 12px; }
         button { background: #0e639c; color: white; border: none; padding: 5px 15px; cursor: pointer; font-weight: bold; }
-        .file { padding: 8px 15px; cursor: pointer; font-size: 13px; color: #ccc; }
+        .file { padding: 8px 15px; cursor: pointer; font-size: 13px; color: #ccc; border-left: 2px solid transparent; }
         .file:hover { background: #2a2d2e; color: white; }
+        .file.active { background: #37373d; color: white; border-left: 2px solid #007acc; }
         .folder-root { padding: 12px; font-weight: bold; color: #858585; font-size: 11px; text-transform: uppercase; }
-        #tab-title { height: 35px; background: #2d2d2d; display: flex; align-items: center; padding: 0 15px; font-size: 12px; border-bottom: 1px solid #1e1e1e; }
+        #tab-title { height: 35px; background: #2d2d2d; display: flex; align-items: center; padding: 0 15px; font-size: 12px; }
     </style>
 </head>
 <body>
@@ -31,21 +31,87 @@
             </div>
             <div id="tree-content"></div>
         </aside>
-
         <main id="editor-wrapper">
-            <div id="tab-title">index.html</div>
+            <div id="tab-title">Selecione um arquivo</div>
             <div id="monaco-editor"></div>
         </main>
-
         <section id="preview-panel">
             <iframe id="preview-frame" style="width: 100%; height: 100%; border: none;"></iframe>
         </section>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs/loader.min.js"></script>
-    
-    <script src="monaco-init.js"></script>
-    <script src="scanner.js"></script>
-    <script src="app.js"></script>
+
+    <script>
+        let editor;
+        let vfsGlobal = {};
+
+        // 1. Inicializa o Editor
+        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs' }});
+        require(['vs/editor/editor.main'], function() {
+            editor = monaco.editor.create(document.getElementById('monaco-editor'), {
+                value: "/* Cole a URL e clique em SCAN */",
+                language: 'html',
+                theme: 'vs-dark',
+                automaticLayout: true
+            });
+        });
+
+        // 2. Lógica do Scanner
+        async function scanURL(url) {
+            const proxy = "https://api.allorigins.win/get?url=";
+            try {
+                const response = await fetch(proxy + encodeURIComponent(url));
+                const data = await response.json();
+                const html = data.contents;
+                
+                const vfs = { 'index.html': { lang: 'html', content: html }, css: {}, js: {} };
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+
+                doc.querySelectorAll('link[rel="stylesheet"]').forEach((l, i) => {
+                    vfs.css[`style_${i+1}.css`] = { lang: 'css', content: `/* CSS extraído */` };
+                });
+                doc.querySelectorAll('script[src]').forEach((s, i) => {
+                    vfs.js[`script_${i+1}.js`] = { lang: 'javascript', content: `// JS extraído` };
+                });
+                return vfs;
+            } catch (e) { return null; }
+        }
+
+        // 3. Lógica da Interface
+        function addFile(name, lang, type) {
+            const div = document.createElement('div');
+            div.className = 'file';
+            div.innerText = name;
+            div.onclick = () => {
+                document.querySelectorAll('.file').forEach(f => f.classList.remove('active'));
+                div.classList.add('active');
+                let content = (type === 'root') ? vfsGlobal[name].content : vfsGlobal[type][name].content;
+                editor.setValue(content);
+                monaco.editor.setModelLanguage(editor.getModel(), lang);
+                document.getElementById('tab-title').innerText = name;
+                if(lang === 'html') document.getElementById('preview-frame').srcdoc = content;
+            };
+            document.getElementById('tree-content').appendChild(div);
+        }
+
+        document.getElementById('btn-scan').onclick = async () => {
+            const url = document.getElementById('url-input').value;
+            if(!url) return;
+            document.getElementById('btn-scan').innerText = "...";
+            const data = await scanURL(url);
+            if(data) {
+                vfsGlobal = data;
+                document.getElementById('tree-content').innerHTML = "";
+                addFile('10. index.html', 'html', 'root');
+                Object.keys(data.css).forEach(f => addFile('11. ' + f, 'css', 'css'));
+                Object.keys(data.js).forEach(f => addFile('12. ' + f, 'javascript', 'js'));
+                editor.setValue(data['index.html'].content);
+                document.getElementById('preview-frame').srcdoc = data['index.html'].content;
+            }
+            document.getElementById('btn-scan').innerText = "Scan";
+        };
+    </script>
 </body>
 </html>
