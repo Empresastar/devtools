@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meu VS Code URL Scanner</title>
-    <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="./assets/css/main.css">
 </head>
 <body>
 
@@ -14,19 +14,20 @@
                 <span>EXPLORER</span>
             </div>
             <div class="url-input-container">
-                <input type="text" id="url-input" placeholder="Cole a URL aqui...">
+                <input type="text" id="url-input" placeholder="Cole a URL do site aqui...">
                 <button id="btn-scan">Scan</button>
             </div>
             <nav id="file-tree">
                 <div class="folder-root">1. PROJETO-RAIZ</div>
                 <div id="tree-content">
-                    </div>
+                    <div class="file-info">Aguardando URL para mapear pastas...</div>
+                </div>
             </nav>
         </aside>
 
         <main id="editor-wrapper">
             <header id="tabs-bar">
-                <div class="tab active">index.html</div>
+                <div class="tab active" id="tab-title">index.html</div>
             </header>
             <div id="monaco-editor"></div>
         </main>
@@ -39,7 +40,8 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs/loader.min.js"></script>
     
-    <script src="assets/js/monaco-init.js"></script>
-    <script src="assets/js/app.js"></script>
+    <script src="./assets/js/monaco-init.js"></script>
+    <script src="./assets/js/scanner.js"></script>
+    <script src="./assets/js/app.js"></script>
 </body>
 </html>
