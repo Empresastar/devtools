@@ -1,32 +1,30 @@
-async function startApp() {
-    // 1. Inicia o Editor
-    const editor = await EditorModule.init('monaco-editor');
+window.onload = async () => {
+    // 1. Inicia o Editor (Cores)
+    await EditorModule.init('monaco-editor');
 
-    // 2. Inicia o P2P e define o que acontece quando recebe dados
-    P2PModule.init((data) => {
-        if (data.type === 'CODE_UPDATE') {
-            const currentPos = editor.getPosition();
-            editor.setValue(data.content);
-            editor.setPosition(currentPos);
-        }
-        if (data.type === 'NEW_FILE') {
-            FilesModule.addFileToList(data.name);
+    // 2. Inicia o P2P (ID)
+    P2PModule.init((dados) => {
+        // Quando receber código do amigo
+        if (dados.type === 'CODE') {
+            EditorModule.instance.setValue(dados.content);
         }
     });
 
-    // 3. Evento de Digitação (Envia pro amigo)
-    editor.onDidChangeModelContent(() => {
-        P2PModule.send({
-            type: 'CODE_UPDATE',
-            content: editor.getValue()
-        });
-    });
-
-    // 4. Botão Conectar
+    // 3. Configura o botão de Conectar
     document.getElementById('connect-btn').onclick = () => {
         const id = document.getElementById('peer-id-input').value;
-        P2PModule.connect(id, (data) => { /* mesma lógica de recebimento */ });
+        P2PModule.connect(id, (dados) => {
+            if (dados.type === 'CODE') {
+                EditorModule.instance.setValue(dados.content);
+            }
+        });
     };
-}
 
-startApp();
+    // 4. Enviar código enquanto digita
+    EditorModule.instance.onDidChangeModelContent(() => {
+        P2PModule.send({
+            type: 'CODE',
+            content: EditorModule.instance.getValue()
+        });
+    });
+};
