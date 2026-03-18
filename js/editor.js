@@ -10,29 +10,19 @@ const EditorModule = {
                     automaticLayout: true,
                     fontSize: 14,
                     language: 'javascript',
-                    minimap: { enabled: false },
-                    scrollbar: { vertical: 'visible', horizontal: 'visible' }
+                    minimap: { enabled: false }
                 });
                 resolve();
             });
         });
     },
 
-    // Garante que o código fique COLORIDO conforme o arquivo
     setLanguage(filename) {
         const ext = filename.split('.').pop();
-        const map = { 
-            'html': 'html', 
-            'css': 'css', 
-            'js': 'javascript', 
-            'json': 'json', 
-            'py': 'python' 
-        };
-        const lang = map[ext] || 'javascript';
-        monaco.editor.setModelLanguage(this.instance.getModel(), lang);
+        const map = { 'html': 'html', 'css': 'css', 'js': 'javascript', 'json': 'json' };
+        monaco.editor.setModelLanguage(this.instance.getModel(), map[ext] || 'javascript');
     },
 
-    // Abre o preview em uma nova aba
     runPreview() {
         const code = this.instance.getValue();
         const blob = new Blob([code], { type: 'text/html' });
