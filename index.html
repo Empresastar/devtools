@@ -2,199 +2,196 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rubi Code | VS Code P2P</title>
+    <title>Rubi Code | Editor Profissional</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.1/min/vs/loader.min.js"></script>
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
 
     <style>
-        /* CSS INTEGRADO - Estilo VS Code Original */
         * { box-sizing: border-box; }
         body, html { margin: 0; padding: 0; height: 100%; background: #1e1e1e; color: #fff; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
 
-        #vs-code-container { display: flex; height: 100vh; }
+        #vs-code { display: flex; height: 100vh; }
 
-        /* Barra Lateral de Ícones (Activity Bar) */
-        #activity-bar { width: 50px; background: #333333; display: flex; flex-direction: column; align-items: center; padding-top: 15px; gap: 20px; }
-        .action-icon { font-size: 20px; cursor: pointer; opacity: 0.6; transition: 0.3s; }
-        .action-icon:hover { opacity: 1; }
-        .action-icon.active { opacity: 1; border-left: 2px solid #e0115f; width: 100%; text-align: center; }
+        /* Barra de Ícones Lateral */
+        #activity-bar { width: 50px; background: #333; display: flex; flex-direction: column; align-items: center; padding-top: 15px; gap: 20px; border-right: 1px solid #222; }
+        .icon { font-size: 22px; cursor: pointer; opacity: 0.5; }
+        .icon:hover { opacity: 1; }
+        .icon.active { opacity: 1; border-left: 2px solid #e0115f; width: 100%; text-align: center; }
 
         /* Sidebar (Explorador) */
         #sidebar { width: 260px; background: #252526; display: flex; flex-direction: column; border-right: 1px solid #333; }
-        .sidebar-header { padding: 10px 20px; font-size: 11px; font-weight: bold; color: #bbb; letter-spacing: 1px; }
+        .sidebar-header { padding: 10px; font-size: 11px; font-weight: bold; color: #888; display: flex; justify-content: space-between; align-items: center; }
         
-        .btn-main { background: #e0115f; color: white; border: none; margin: 10px; padding: 10px; cursor: pointer; font-weight: bold; border-radius: 3px; }
-        .btn-main:hover { background: #ff1a75; }
+        .actions { padding: 5px 10px; display: flex; gap: 10px; background: #2d2d2d; }
+        .action-btn { cursor: pointer; font-size: 14px; title: "Novo Arquivo"; }
+        .action-btn:hover { color: #e0115f; }
 
-        .p2p-card { background: #333; margin: 10px; padding: 10px; border-radius: 4px; font-size: 11px; border: 1px solid #444; }
-        #meu-id { color: #00ffcc; font-family: monospace; font-size: 12px; margin: 5px 0; word-break: break-all; }
-        input { width: 100%; background: #3c3c3c; border: 1px solid #555; color: white; padding: 8px; margin-top: 5px; border-radius: 2px; }
+        .p2p-box { background: #333; margin: 10px; padding: 10px; border-radius: 4px; font-size: 11px; }
+        #meu-id { color: #00ffcc; font-family: monospace; margin: 5px 0; word-break: break-all; }
 
         /* Lista de Arquivos */
-        .file-tree { flex-grow: 1; overflow-y: auto; }
-        #lista-arquivos { list-style: none; padding: 0; margin: 0; }
-        #lista-arquivos li { padding: 6px 20px; font-size: 13px; cursor: pointer; transition: 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        #lista-arquivos li:hover { background: #2a2d2e; }
+        #file-list { list-style: none; padding: 0; margin: 0; flex-grow: 1; overflow-y: auto; }
+        #file-list li { padding: 5px 20px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+        #file-list li:hover { background: #2a2d2e; }
+        #file-list li.active { background: #37373d; }
 
-        /* Área do Editor */
-        #editor-section { flex-grow: 1; display: flex; flex-direction: column; }
-        #tabs { height: 35px; background: #252526; display: flex; align-items: flex-end; border-bottom: 1px solid #1e1e1e; }
-        .tab { padding: 8px 20px; background: #2d2d2d; font-size: 12px; border-right: 1px solid #1e1e1e; color: #969696; cursor: default; }
-        .tab.active { background: #1e1e1e; color: #fff; border-top: 1px solid #e0115f; }
+        /* Editor */
+        #main-editor { flex-grow: 1; display: flex; flex-direction: column; }
+        #tabs { height: 35px; background: #252526; display: flex; border-bottom: 1px solid #1e1e1e; }
+        .tab { padding: 8px 20px; background: #2d2d2d; font-size: 12px; border-right: 1px solid #1e1e1e; display: flex; align-items: center; gap: 10px; }
+        .tab.active { background: #1e1e1e; border-top: 1px solid #e0115f; }
 
-        #editor-container { flex-grow: 1; width: 100%; }
+        #monaco-container { flex-grow: 1; width: 100%; }
 
-        /* Barra de Status */
-        #statusbar { height: 22px; background: #e0115f; display: flex; justify-content: space-between; align-items: center; padding: 0 10px; font-size: 12px; font-weight: 500; }
+        /* Status Bar */
+        #statusbar { height: 22px; background: #007acc; display: flex; justify-content: space-between; align-items: center; padding: 0 10px; font-size: 12px; }
     </style>
 </head>
 <body>
 
-    <div id="vs-code-container">
-        <aside id="activity-bar">
-            <div class="action-icon active">📄</div>
-            <div class="action-icon">🔍</div>
-            <div class="action-icon">🌿</div>
-            <div class="action-icon">⚙️</div>
-        </aside>
+<div id="vs-code">
+    <aside id="activity-bar">
+        <div class="icon active">📄</div>
+        <div class="icon">🔍</div>
+        <div class="icon">⚙️</div>
+    </aside>
 
-        <aside id="sidebar">
-            <div class="sidebar-header">EXPLORADOR: RUBI</div>
-            
-            <button id="btn-abrir-pasta" class="btn-main">📁 ABRIR PASTA DO PC</button>
-
-            <div class="p2p-card">
-                <strong>SEU ID (HOST):</strong>
-                <div id="meu-id">Gerando...</div>
-                <input type="text" id="id-amigo-input" placeholder="ID do Amigo">
-                <button id="btn-conectar" style="width:100%; margin-top:5px; background:#444; color:white; border:none; padding:5px; cursor:pointer;">CONECTAR</button>
+    <aside id="sidebar">
+        <div class="sidebar-header">
+            <span>EXPLORADOR</span>
+            <div class="actions">
+                <span class="action-btn" id="new-file" title="Novo Arquivo">📄+</span>
+                <span class="action-btn" id="open-folder" title="Abrir Pasta">📁</span>
             </div>
+        </div>
 
-            <nav class="file-tree">
-                <ul id="lista-arquivos">
-                    <li style="color:#666; font-style:italic;">Nenhuma pasta aberta</li>
-                </ul>
-            </nav>
-        </aside>
+        <div class="p2p-box">
+            <strong>MEU ID P2P:</strong>
+            <div id="meu-id">Gerando...</div>
+            <input type="text" id="id-amigo" placeholder="ID do Amigo" style="width:100%; background:#444; color:#fff; border:none; padding:4px; margin-top:5px;">
+            <button id="btn-conectar" style="width:100%; margin-top:5px; cursor:pointer;">Conectar</button>
+        </div>
 
-        <main id="editor-section">
-            <div id="tabs">
-                <div class="tab active" id="current-file">bem-vindo.js</div>
-            </div>
-            <div id="editor-container"></div>
-            <div id="statusbar">
-                <div id="status-left">Pronto</div>
-                <div id="status-right">UTF-8 | JavaScript</div>
-            </div>
-        </main>
-    </div>
+        <ul id="file-list">
+            </ul>
+    </aside>
 
-    <script>
-        /* JAVASCRIPT INTEGRADO */
-        window.onload = () => {
-            const peer = new Peer();
-            let conn;
-            let editor;
-            let isLocalChange = true;
+    <main id="main-editor">
+        <div id="tabs">
+            <div class="tab active" id="active-tab-name">sem-nome.js</div>
+        </div>
+        <div id="monaco-container"></div>
+        <div id="statusbar">
+            <div id="status-left">Pronto</div>
+            <div id="status-right">UTF-8 | JavaScript</div>
+        </div>
+    </main>
+</div>
 
-            // 1. Inicializar o Monaco Editor com Cores
-            require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.1/min/vs' }});
-            require(['vs/editor/editor.main'], function() {
-                editor = monaco.editor.create(document.getElementById('editor-container'), {
-                    value: "// 💎 Rubi Code\n// 1. Abra uma pasta no botão acima\n// 2. Compartilhe seu ID P2P",
-                    language: 'javascript',
-                    theme: 'vs-dark',
-                    automaticLayout: true,
-                    fontSize: 14,
-                    renderWhitespace: "all"
-                });
+<script>
+    let editor;
+    let peer = new Peer();
+    let conn;
+    let arquivos = {}; // Armazena o conteúdo de cada arquivo criado
+    let arquivoAtual = "";
 
-                // Sincronização ao digitar
-                editor.onDidChangeModelContent(() => {
-                    if (isLocalChange && conn && conn.open) {
-                        conn.send({ type: 'EDIT', content: editor.getValue() });
-                    }
-                });
-            });
+    // 1. INICIALIZAR EDITOR COLORIDO (MONACO)
+    require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.1/min/vs' }});
+    require(['vs/editor/editor.main'], function() {
+        editor = monaco.editor.create(document.getElementById('monaco-container'), {
+            value: "// Rubi Code Original\n// Use os ícones acima para criar arquivos",
+            language: 'javascript',
+            theme: 'vs-dark',
+            automaticLayout: true,
+            fontSize: 14
+        });
 
-            // 2. Abrir Pasta do Computador (API File System)
-            document.getElementById('btn-abrir-pasta').onclick = async () => {
-                try {
-                    const dirHandle = await window.showDirectoryPicker();
-                    const listaUI = document.getElementById('lista-arquivos');
-                    listaUI.innerHTML = "";
-                    let arquivosParaEnviar = [];
-
-                    for await (const entry of dirHandle.values()) {
-                        if (entry.kind === 'file') {
-                            arquivosParaEnviar.push(entry.name);
-                            const li = document.createElement('li');
-                            li.innerText = "📄 " + entry.name;
-                            li.onclick = async () => {
-                                const file = await entry.getFile();
-                                const text = await file.text();
-                                abrirArquivoNoEditor(entry.name, text);
-                                if (conn) conn.send({ type: 'OPEN', name: entry.name, content: text });
-                            };
-                            listaUI.appendChild(li);
-                        }
-                    }
-                    if (conn) conn.send({ type: 'LIST', files: arquivosParaEnviar });
-                } catch (e) { console.log("Acesso à pasta negado."); }
-            };
-
-            function abrirArquivoNoEditor(nome, conteudo) {
-                isLocalChange = false;
-                const ext = nome.split('.').pop();
-                let lang = 'javascript';
-                if(ext === 'html') lang = 'html';
-                if(ext === 'css') lang = 'css';
-                
-                monaco.editor.setModelLanguage(editor.getModel(), lang);
-                editor.setValue(conteudo);
-                document.getElementById('current-file').innerText = nome;
-                document.getElementById('status-right').innerText = `UTF-8 | ${lang.toUpperCase()}`;
-                isLocalChange = true;
+        // Sincronizar o que você digita
+        editor.onDidChangeModelContent(() => {
+            if (arquivoAtual && conn && conn.open) {
+                arquivos[arquivoAtual] = editor.getValue();
+                conn.send({ type: 'EDIT', file: arquivoAtual, content: editor.getValue() });
             }
+        });
+    });
 
-            // 3. Lógica P2P (PeerJS)
-            peer.on('open', id => {
-                document.getElementById('meu-id').innerText = id;
-            });
+    // 2. CRIAR NOVO ARQUIVO
+    document.getElementById('new-file').onclick = () => {
+        let nome = prompt("Nome do arquivo (ex: index.html):");
+        if (nome) {
+            adicionarArquivoNaLista(nome, "");
+            if (conn) conn.send({ type: 'NEW_FILE', name: nome });
+        }
+    };
 
-            peer.on('connection', c => {
-                conn = c;
-                document.getElementById('status-left').innerText = "Amigo Conectado";
-                setupReceiver();
-            });
+    function adicionarArquivoNaLista(nome, conteudo) {
+        arquivos[nome] = conteudo;
+        const li = document.createElement('li');
+        li.innerHTML = `<span>📄</span> ${nome}`;
+        li.onclick = () => abrirArquivo(nome);
+        document.getElementById('file-list').appendChild(li);
+        abrirArquivo(nome);
+    }
 
-            document.getElementById('btn-conectar').onclick = () => {
-                const id = document.getElementById('id-amigo-input').value;
-                conn = peer.connect(id);
-                document.getElementById('status-left').innerText = "Conectando...";
-                setupReceiver();
-            };
+    function abrirArquivo(nome) {
+        arquivoAtual = nome;
+        document.getElementById('active-tab-name').innerText = nome;
+        
+        // Detectar Linguagem para as CORES
+        const ext = nome.split('.').pop();
+        let lang = 'javascript';
+        if (ext === 'html') lang = 'html';
+        if (ext === 'css') lang = 'css';
+        
+        monaco.editor.setModelLanguage(editor.getModel(), lang);
+        editor.setValue(arquivos[nome]);
+        document.getElementById('status-right').innerText = `UTF-8 | ${lang.toUpperCase()}`;
+    }
 
-            function setupReceiver() {
-                conn.on('data', (data) => {
-                    isLocalChange = false;
-                    if (data.type === 'EDIT' || data.type === 'OPEN') {
-                        editor.setValue(data.content);
-                        if(data.name) document.getElementById('current-file').innerText = data.name;
-                    }
-                    if (data.type === 'LIST') {
-                        const listaUI = document.getElementById('lista-arquivos');
-                        listaUI.innerHTML = data.files.map(f => `<li>📄 ${f}</li>`).join('');
-                    }
-                    isLocalChange = true;
-                });
-                conn.on('open', () => {
-                    document.getElementById('status-left').innerText = "Sincronizado";
-                });
+    // 3. P2P E SINCRONIZAÇÃO
+    peer.on('open', id => document.getElementById('meu-id').innerText = id);
+
+    peer.on('connection', c => {
+        conn = c;
+        document.getElementById('status-left').innerText = "Amigo Conectado";
+        setupReceiver();
+    });
+
+    document.getElementById('btn-conectar').onclick = () => {
+        conn = peer.connect(document.getElementById('id-amigo').value);
+        setupReceiver();
+    };
+
+    function setupReceiver() {
+        conn.on('data', (data) => {
+            if (data.type === 'NEW_FILE') {
+                adicionarArquivoNaLista(data.name, "");
             }
-        };
-    </script>
+            if (data.type === 'EDIT') {
+                arquivos[data.file] = data.content;
+                if (arquivoAtual === data.file) {
+                    const pos = editor.getPosition();
+                    editor.setValue(data.content);
+                    editor.setPosition(pos);
+                }
+            }
+        });
+    }
+
+    // 4. ABRIR PASTA DO PC (Bônus)
+    document.getElementById('open-folder').onclick = async () => {
+        const dir = await window.showDirectoryPicker();
+        document.getElementById('file-list').innerHTML = "";
+        for await (const entry of dir.values()) {
+            if (entry.kind === 'file') {
+                const file = await entry.getFile();
+                const text = await file.text();
+                adicionarArquivoNaLista(entry.name, text);
+            }
+        }
+    };
+</script>
+
 </body>
 </html>
