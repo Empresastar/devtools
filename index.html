@@ -2,46 +2,59 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>SISTEMA QUÂNTICO V2 - BRUTO</title>
+    <title>SISTEMA QUÂNTICO - MAPEADOR BRUTO V3</title>
     <style>
-        :root { --bg: #0d1117; --sidebar: #161b22; --accent: #58a6ff; --text: #c9d1d9; }
-        body { background: var(--bg); color: var(--text); font-family: 'Fira Code', monospace; margin: 0; overflow: hidden; }
-        #app { display: flex; height: 100vh; }
+        :root { --bg: #0d1117; --sidebar: #010409; --accent: #79c0ff; --folder: #d29922; --js: #f1e05a; --css: #563d7c; --html: #e34c26; }
+        body { background: var(--bg); color: #c9d1d9; font-family: 'Fira Code', 'Cascadia Code', monospace; margin: 0; overflow: hidden; }
+        #app { display: flex; height: 100vh; width: 100vw; }
+        
+        /* Sidebar Estilizada */
         #side { width: 320px; background: var(--sidebar); border-right: 1px solid #30363d; display: flex; flex-direction: column; }
-        #editor-cont { flex: 1; display: flex; flex-direction: column; }
-        #monaco-editor { flex: 1; }
-        #preview { width: 400px; background: white; border-left: 1px solid #30363d; }
-        .input-box { padding: 15px; background: #010409; display: flex; flex-direction: column; gap: 8px; }
-        input { background: #0d1117; border: 1px solid #30363d; color: var(--accent); padding: 10px; font-size: 12px; outline: none; border-radius: 4px; }
-        button { background: #238636; color: white; border: none; padding: 10px; cursor: pointer; font-weight: bold; border-radius: 4px; transition: 0.2s; }
-        button:hover { background: #2ea043; transform: scale(1.02); }
+        .input-section { padding: 15px; background: #161b22; border-bottom: 1px solid #30363d; }
+        input { width: 100%; background: #0d1117; border: 1px solid #30363d; color: var(--accent); padding: 10px; border-radius: 6px; outline: none; box-sizing: border-box; margin-bottom: 10px; }
+        button { width: 100%; background: #238636; color: white; border: none; padding: 12px; cursor: pointer; font-weight: bold; border-radius: 6px; text-transform: uppercase; letter-spacing: 1px; }
+        button:hover { background: #2ea043; box-shadow: 0 0 15px rgba(46, 160, 67, 0.4); }
+
+        /* Árvore de Arquivos Colorida */
         .tree { overflow-y: auto; flex: 1; padding: 10px; }
-        .item { padding: 6px 10px; cursor: pointer; font-size: 12px; border-radius: 3px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #8b949e; }
-        .item:hover { background: #21262d; color: white; }
-        .item.active { background: #1f6feb; color: white; font-weight: bold; }
-        .folder { font-weight: bold; color: #58a6ff; font-size: 10px; text-transform: uppercase; margin: 15px 0 5px 5px; letter-spacing: 1px; }
-        #status { font-size: 10px; color: #f85149; text-align: center; margin-top: 5px; }
+        .folder { color: var(--folder); font-size: 11px; font-weight: bold; margin: 15px 0 5px 0; display: flex; align-items: center; gap: 5px; }
+        .folder::before { content: '📂'; }
+        .item { padding: 6px 10px; cursor: pointer; font-size: 12px; border-radius: 4px; display: flex; align-items: center; gap: 8px; transition: 0.1s; }
+        .item:hover { background: #21262d; }
+        .item.active { background: #1f6feb; color: white; }
+        .icon-js { color: var(--js); }
+        .icon-css { color: var(--css); }
+        .icon-html { color: var(--html); }
+
+        /* Editor e Preview */
+        #editor-cont { flex: 1; display: flex; flex-direction: column; position: relative; }
+        #monaco-editor { flex: 1; border-top: 1px solid #30363d; }
+        #tabs { height: 40px; background: #161b22; display: flex; align-items: center; padding-left: 10px; font-size: 12px; color: var(--accent); }
+        #preview { width: 450px; background: white; border-left: 1px solid #30363d; position: relative; }
+        .preview-label { position: absolute; top: 0; right: 0; background: #f85149; color: white; font-size: 9px; padding: 2px 8px; z-index: 10; }
     </style>
 </head>
 <body>
 
 <div id="app">
     <aside id="side">
-        <div class="input-box">
-            <input type="text" id="target-url" placeholder="https://site-alvo.com">
-            <button id="scan-btn">DISPARAR VARREDURA QUÂNTICA</button>
-            <div id="status"></div>
+        <div class="input-section">
+            <input type="text" id="target-url" placeholder="https://exemplo.com.br">
+            <button id="scan-btn">EXECUTAR VARREDURA BRUTA</button>
         </div>
-        <div class="tree" id="tree"></div>
+        <div class="tree" id="tree-root">
+            <div style="text-align: center; padding: 40px; color: #484f58; font-size: 12px;">SISTEMA QUÂNTICO ONLINE <br> AGUARDANDO ALVO...</div>
+        </div>
     </aside>
 
     <main id="editor-cont">
-        <div id="tab-name" style="padding: 10px; background: #161b22; font-size: 11px; color: #58a6ff; border-bottom: 1px solid #30363d;">CONSOLE ATIVO</div>
+        <div id="tabs"> <span id="current-file">Selecione um arquivo mapeado</span> </div>
         <div id="monaco-editor"></div>
     </main>
 
     <section id="preview">
-        <iframe id="view" style="width:100%; height:100%; border:none;"></iframe>
+        <div class="preview-label">LIVE VIEW</div>
+        <iframe id="view-frame" style="width:100%; height:100%; border:none;"></iframe>
     </section>
 </div>
 
@@ -52,110 +65,105 @@
 
 <script>
     let editor, vfs = {};
-    const statusEl = document.getElementById('status');
-    
-    // Proxies de contingência para evitar o erro de CORS
-    const proxies = [
-        url => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
-        url => `https://cors-anywhere.herokuapp.com/${url}`,
-        url => `https://thingproxy.freeboard.io/fetch/${url}`
-    ];
+    const treeEl = document.getElementById('tree-root');
 
+    // Inicializa o Editor Coloridinho (Monaco)
     require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs' }});
     require(['vs/editor/editor.main'], function() {
         editor = monaco.editor.create(document.getElementById('monaco-editor'), {
-            value: "// AGUARDANDO COMANDO BRUTO...",
-            language: 'javascript', theme: 'vs-dark', automaticLayout: true, fontSize: 13
+            value: "// SISTEMA QUÂNTICO AGUARDANDO...\n// O MAPEARÁ HTML, JS, CSS, JSON E MAIS.",
+            language: 'javascript', theme: 'vs-dark', automaticLayout: true, fontSize: 14, 
+            minimap: { enabled: true }, fontLigatures: true
         });
     });
 
+    // Função de Busca Bruta (Contorna bloqueios)
     async function bruteFetch(url) {
-        statusEl.innerText = "Testando tuneis quânticos...";
-        for (let getProxy of proxies) {
+        const proxies = [
+            u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,
+            u => `https://thingproxy.freeboard.io/fetch/${u}`
+        ];
+        for (let p of proxies) {
             try {
-                const res = await fetch(getProxy(url));
-                if (res.ok) {
-                    const data = await res.json();
-                    return data.contents || data; // Dependendo do proxy o formato muda
-                }
-            } catch (e) { continue; }
+                const res = await fetch(p(url));
+                const data = await res.json();
+                return data.contents || data;
+            } catch(e) { continue; }
         }
         return null;
     }
 
+    // O DISPARO BRUTO
     document.getElementById('scan-btn').onclick = async () => {
         const url = document.getElementById('target-url').value;
         if(!url) return;
         
-        document.getElementById('scan-btn').innerText = "VARRENDO...";
-        statusEl.innerText = "";
+        document.getElementById('scan-btn').innerText = "MAPEANDO...";
+        const raw = await bruteFetch(url);
         
-        let rawHtml = await bruteFetch(url);
-        
-        if(!rawHtml || typeof rawHtml !== 'string') {
-            statusEl.innerText = "ERRO: Site bloqueou todos os túneis (CORS).";
-            document.getElementById('scan-btn').innerText = "SCAN";
+        if(!raw || typeof raw !== 'string') {
+            alert("ERRO QUÂNTICO: Site bloqueado ou inacessível.");
+            document.getElementById('scan-btn').innerText = "VARREDURA BRUTA";
             return;
         }
 
-        // Organiza o HTML bruto de forma rápida
-        const cleanHtml = html_beautify(rawHtml, { indent_size: 2 });
-
-        vfs = { '10. index.html': { c: cleanHtml, l: 'html' }, css: {}, js: {} };
+        // Criando a Árvore Mapeada
+        vfs = { '10. index.html': { c: html_beautify(raw), l: 'html' }, css: {}, js: {}, assets: {} };
         const parser = new DOMParser();
-        const doc = parser.parseFromString(rawHtml, 'text/html');
+        const doc = parser.parseFromString(raw, 'text/html');
 
-        // Mapeamento Quântico de Recursos
+        // Escaneando CSS
         doc.querySelectorAll('link[rel="stylesheet"]').forEach((el, i) => {
-            const name = `11. style_${i+1}.css`;
-            vfs.css[name] = { c: `/* Link Original: ${el.href} */\n/* Puxando dados... */`, l: 'css' };
+            vfs.css[`style_${i+1}.css`] = { c: `/* Link: ${el.href} */\n/* Código mapeado... */`, l: 'css' };
         });
 
+        // Escaneando JS
         doc.querySelectorAll('script[src]').forEach((el, i) => {
-            const name = `12. script_${i+1}.js`;
-            vfs.js[name] = { c: `// Source: ${el.src}\n// Analisando lógica...`, l: 'javascript' };
+            vfs.js[`script_${i+1}.js`] = { c: `// Source: ${el.src}\n// Lógica filtrada...`, l: 'javascript' };
         });
 
+        // Mostrando no Editor e Preview
         renderTree();
-        editor.setValue(cleanHtml);
+        editor.setValue(vfs['10. index.html'].c);
         monaco.editor.setModelLanguage(editor.getModel(), 'html');
-        document.getElementById('view').srcdoc = rawHtml;
-        document.getElementById('scan-btn').innerText = "DISPARAR SCAN";
+        document.getElementById('view-frame').srcdoc = raw;
+        document.getElementById('scan-btn').innerText = "VARREDURA COMPLETA";
     };
 
     function renderTree() {
-        const tree = document.getElementById('tree');
-        tree.innerHTML = `<div class="folder">10. ROOT</div>`;
-        createItem('index.html', '10. index.html', 'html', 'root');
+        treeEl.innerHTML = `<div class="folder">10. RAIZ DO SITE</div>`;
+        createItem('index.html', '10. index.html', 'html', 'root', '📄');
 
         if(Object.keys(vfs.css).length) {
-            tree.innerHTML += `<div class="folder">11. CSS FILTERS</div>`;
-            Object.keys(vfs.css).forEach(k => createItem(k, k, 'css', 'css'));
+            treeEl.innerHTML += `<div class="folder">11. ESTILOS (CSS)</div>`;
+            Object.keys(vfs.css).forEach(k => createItem(k, k, 'css', 'css', '🎨'));
         }
         if(Object.keys(vfs.js).length) {
-            tree.innerHTML += `<div class="folder">12. JS LOGIC</div>`;
-            Object.keys(vfs.js).forEach(k => createItem(k, k, 'javascript', 'js'));
+            treeEl.innerHTML += `<div class="folder">12. LÓGICA (JS)</div>`;
+            Object.keys(vfs.js).forEach(k => createItem(k, k, 'javascript', 'js', '⚡'));
         }
     }
 
-    function createItem(label, key, lang, type) {
+    function createItem(label, key, lang, type, icon) {
         const div = document.createElement('div');
         div.className = 'item';
-        div.innerText = label;
+        div.innerHTML = `<span>${icon}</span> ${label}`;
         div.onclick = () => {
             document.querySelectorAll('.item').forEach(i => i.classList.remove('active'));
             div.classList.add('active');
+            
             let code = (type === 'root') ? vfs['10. index.html'].c : vfs[type][key].c;
             
-            // Embelezar código na hora de mostrar
+            // Auto-Formatação Quântica ao clicar
             if(lang === 'css') code = css_beautify(code);
             if(lang === 'javascript') code = js_beautify(code);
+            if(lang === 'html') code = html_beautify(code);
 
             editor.setValue(code);
             monaco.editor.setModelLanguage(editor.getModel(), lang);
-            document.getElementById('tab-name').innerText = key;
+            document.getElementById('current-file').innerText = label.toUpperCase();
         };
-        document.getElementById('tree').appendChild(div);
+        treeEl.appendChild(div);
     }
 </script>
 </body>
