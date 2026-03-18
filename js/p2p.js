@@ -1,26 +1,53 @@
+// Este arquivo cuida só da conexão
 const P2PModule = {
-    peer: new Peer(),
+    peer: null,
     connection: null,
 
-    init(onDataReceived) {
-        this.peer.on('open', id => document.getElementById('display-id').innerText = id);
-        this.peer.on('connection', conn => this.setupConn(conn, onDataReceived));
+    init(callbackSucesso) {
+        // Criando o objeto Peer
+        this.peer = new Peer();
+
+        // Evento que gera o ID
+        this.peer.on('open', (id) => {
+            console.log("ID Criado:", id);
+            const campoId = document.getElementById('display-id');
+            if (campoId) {
+                campoId.innerText = id;
+                campoId.style.color = "#00ffcc"; // Fica verde quando o ID aparece
+            }
+        });
+
+        // Receber conexão de amigo
+        this.peer.on('connection', (conn) => {
+            this.connection = conn;
+            this.setupEvents(callbackSucesso);
+        });
+
+        // Caso dê erro (importante para debugar)
+        this.peer.on('error', (err) => {
+            console.error("Erro no P2P:", err);
+            document.getElementById('display-id').innerText = "Erro de Conexão";
+        });
     },
 
-    connect(targetId, onDataReceived) {
-        const conn = this.peer.connect(targetId);
-        this.setupConn(conn, onDataReceived);
+    // Conectar no amigo
+    connect(idAmigo, callbackSucesso) {
+        this.connection = this.peer.connect(idAmigo);
+        this.setupEvents(callbackSucesso);
     },
 
-    setupConn(conn, onDataReceived) {
-        this.connection = conn;
-        conn.on('data', onDataReceived);
-        conn.on('open', () => document.getElementById('sync-status').innerText = "Conectado");
+    setupEvents(callbackSucesso) {
+        this.connection.on('open', () => {
+            document.getElementById('sync-status').innerText = "Conectado!";
+        });
+        this.connection.on('data', (data) => {
+            callbackSucesso(data);
+        });
     },
 
-    send(data) {
+    send(dados) {
         if (this.connection && this.connection.open) {
-            this.connection.send(data);
+            this.connection.send(dados);
         }
     }
 };
