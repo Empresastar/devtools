@@ -2,8 +2,9 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Rubi Code | VS Code P2P</title>
+    <title>Rubi Code | Editor P2P</title>
     <link rel="stylesheet" href="css/editor.css">
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.1/min/vs/loader.min.js"></script>
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
 </head>
@@ -12,15 +13,18 @@
     <div id="app">
         <aside id="sidebar">
             <div class="logo">💎 Rubi Code</div>
+            
             <div class="box">
                 <strong>MEU ID (Host):</strong>
                 <div id="meu-id">Gerando...</div>
             </div>
+
             <div class="box">
-                <strong>ENTRAR NO PROJETO:</strong>
+                <strong>ID DO AMIGO:</strong>
                 <input type="text" id="id-amigo-input" placeholder="Cole o ID aqui">
                 <button id="btn-conectar">CONECTAR</button>
             </div>
+
             <div id="status">Status: Desconectado</div>
         </aside>
 
