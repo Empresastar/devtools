@@ -1,53 +1,60 @@
-// Este arquivo cuida só da conexão
 const P2PModule = {
     peer: null,
     connection: null,
 
-    init(callbackSucesso) {
-        // Criando o objeto Peer
+    init(onDataReceived) {
         this.peer = new Peer();
 
-        // Evento que gera o ID
         this.peer.on('open', (id) => {
-            console.log("ID Criado:", id);
-            const campoId = document.getElementById('display-id');
-            if (campoId) {
-                campoId.innerText = id;
-                campoId.style.color = "#00ffcc"; // Fica verde quando o ID aparece
+            const display = document.getElementById('display-id');
+            if (display) display.innerText = id;
+        });
+
+        this.peer.on('connection', (conn) => {
+            this.setupConn(conn, onDataReceived);
+        });
+
+        this.peer.on('error', (err) => {
+            console.error("Erro P2P:", err);
+            document.getElementById('display-id').innerText = "Erro";
+        });
+    },
+
+    connect(targetId, onDataReceived) {
+        if (!targetId) return alert("Digite o ID do amigo!");
+        const conn = this.peer.connect(targetId);
+        this.setupConn(conn, onDataReceived);
+    },
+
+    setupConn(conn, onDataReceived) {
+        this.connection = conn;
+        
+        conn.on('open', () => {
+            const statusLabel = document.getElementById('sync-status');
+            if (statusLabel) {
+                statusLabel.innerText = "🟢 Conectado com Parceiro";
+                statusLabel.style.background = "#28a745";
+                statusLabel.style.color = "white";
+                statusLabel.style.padding = "2px 8px";
+                statusLabel.style.borderRadius = "4px";
+            }
+            alert("Rubi Code: Conexão estabelecida! Ambos podem editar.");
+        });
+
+        conn.on('data', (data) => onDataReceived(data));
+
+        conn.on('close', () => {
+            const statusLabel = document.getElementById('sync-status');
+            if (statusLabel) {
+                statusLabel.innerText = "🔴 Desconectado";
+                statusLabel.style.background = "#dc3545";
             }
         });
-
-        // Receber conexão de amigo
-        this.peer.on('connection', (conn) => {
-            this.connection = conn;
-            this.setupEvents(callbackSucesso);
-        });
-
-        // Caso dê erro (importante para debugar)
-        this.peer.on('error', (err) => {
-            console.error("Erro no P2P:", err);
-            document.getElementById('display-id').innerText = "Erro de Conexão";
-        });
     },
 
-    // Conectar no amigo
-    connect(idAmigo, callbackSucesso) {
-        this.connection = this.peer.connect(idAmigo);
-        this.setupEvents(callbackSucesso);
-    },
-
-    setupEvents(callbackSucesso) {
-        this.connection.on('open', () => {
-            document.getElementById('sync-status').innerText = "Conectado!";
-        });
-        this.connection.on('data', (data) => {
-            callbackSucesso(data);
-        });
-    },
-
-    send(dados) {
+    send(data) {
         if (this.connection && this.connection.open) {
-            this.connection.send(dados);
+            this.connection.send(data);
         }
     }
 };
