@@ -1,104 +1,152 @@
+/**
+ * ARQUIVO 7: LÓGICA DE INTERFACE (COMPLETO)
+ * Controla a árvore de arquivos numerada, o clique nas pastas e o Preview.
+ */
+
 const btnScan = document.getElementById('btn-scan');
 const urlInput = document.getElementById('url-input');
 const treeContent = document.getElementById('tree-content');
 const previewFrame = document.getElementById('preview-frame');
-const currentTab = document.querySelector('.tab');
+const tabTitle = document.getElementById('tab-title');
 
-let virtualFileSystem = {};
+let vfsGlobal = {}; // Armazena os arquivos capturados pelo scanner
 
-// Função para montar a árvore visual na esquerda
-function renderTree(vfs) {
-    treeContent.innerHTML = ""; // Limpa a árvore anterior
+/**
+ * Monta a árvore visual na barra lateral com a numeração correta
+ */
+function buildFileTree(vfs) {
+    treeContent.innerHTML = ""; // Limpa a árvore anterior para não duplicar
 
-    // 10. Index Principal
-    createFileElement('10. index.html', 'index.html', 'html');
+    // 10. Arquivo principal (Raiz)
+    addFileToTree("10. index.html", "index.html", "html", "root");
 
-    // 11. Pasta CSS
-    const cssFolder = createFolderElement('11. css');
-    Object.keys(vfs.css).forEach(file => {
-        createFileElement(`- ${file}`, file, 'css', cssFolder);
-    });
+    // 11. Pasta de Estilos (CSS)
+    const cssKeys = Object.keys(vfs.css);
+    if (cssKeys.length > 0) {
+        addFolderToTree("11. css");
+        cssKeys.forEach((file) => {
+            addFileToTree(`   - ${file}`, file, 'css', 'css');
+        });
+    }
 
-    // 12. Pasta JS
-    const jsFolder = createFolderElement('12. js');
-    Object.keys(vfs.js).forEach(file => {
-        createFileElement(`- ${file}`, file, 'javascript', jsFolder);
-    });
+    // 12. Pasta de Scripts (JS)
+    const jsKeys = Object.keys(vfs.js);
+    if (jsKeys.length > 0) {
+        addFolderToTree("12. js");
+        jsKeys.forEach((file) => {
+            addFileToTree(`   - ${file}`, file, 'javascript', 'js');
+        });
+    }
 }
 
-function createFolderElement(name) {
+/**
+ * Cria o elemento visual da pasta
+ */
+function addFolderToTree(name) {
     const div = document.createElement('div');
     div.className = 'folder-root';
-    div.style.marginLeft = "10px";
-    div.style.marginTop = "10px";
+    div.style.padding = "5px 10px";
+    div.style.fontWeight = "bold";
+    div.style.color = "#858585";
     div.innerText = name;
     treeContent.appendChild(div);
-    return div;
 }
 
-function createFileElement(displayName, fileName, lang, parent = treeContent) {
+/**
+ * Cria o elemento visual do arquivo e configura o clique
+ */
+function addFileToTree(label, fileName, lang, type) {
     const div = document.createElement('div');
     div.className = 'file';
-    div.style.marginLeft = "20px";
-    div.innerText = displayName;
+    div.innerText = label;
+    
     div.onclick = () => {
-        // Remove ativo de outros
+        // Estilo de seleção (active)
         document.querySelectorAll('.file').forEach(f => f.classList.remove('active'));
         div.classList.add('active');
         
-        // Abre no editor
-        openInEditor(fileName, lang);
+        // Carrega o conteúdo no editor
+        loadFileIntoEditor(fileName, lang, type);
     };
-    parent.appendChild(div);
+    
+    treeContent.appendChild(div);
 }
 
-function openInEditor(fileName, lang) {
-    currentTab.innerText = fileName;
+/**
+ * Pega o conteúdo do Sistema de Arquivos Virtual e joga no Editor
+ */
+function loadFileIntoEditor(name, lang, type) {
+    tabTitle.innerText = name;
     let content = "";
 
-    if (fileName === 'index.html') {
-        content = virtualFileSystem['index.html'].content;
-    } else if (virtualFileSystem.css[fileName]) {
-        content = virtualFileSystem.css[fileName].content;
-    } else if (virtualFileSystem.js[fileName]) {
-        content = virtualFileSystem.js[fileName].content;
+    if (type === 'root') {
+        content = vfsGlobal['index.html'].content;
+    } else if (type === 'css') {
+        content = vfsGlobal.css[name].content;
+    } else if (type === 'js') {
+        content = vfsGlobal.js[name].content;
     }
 
-    editor.setValue(content);
-    monaco.editor.setModelLanguage(editor.getModel(), lang);
-    updatePreview();
-}
-
-// 15. O Executor (Atualiza o Iframe)
-function updatePreview() {
-    const code = editor.getValue();
-    // Se for HTML, renderiza direto. Se for CSS/JS, precisaria injetar (simplificado aqui)
-    if (currentTab.innerText.includes('html')) {
-        previewFrame.srcdoc = code;
+    // Garante que o editor existe antes de setar valor
+    if (typeof editor !== 'undefined') {
+        editor.setValue(content);
+        monaco.editor.setModelLanguage(editor.getModel(), lang);
+        
+        // Se for HTML, já atualiza o preview na hora
+        if (lang === 'html') {
+            updateLivePreview(content);
+        }
     }
 }
 
-// Ação do Botão SCAN
+/**
+ * 15. O EXECUTOR (Preview)
+ * Pega o código do editor e renderiza no Iframe
+ */
+function updateLivePreview(htmlCode) {
+    if (previewFrame) {
+        previewFrame.srcdoc = htmlCode;
+    }
+}
+
+/**
+ * Evento do Botão Scan (Chama o Arquivo 6: scanner.js)
+ */
 btnScan.addEventListener('click', async () => {
-    const url = urlInput.value;
-    if (!url) return alert("Insira uma URL!");
+    const url = urlInput.value.trim();
+    if (!url) {
+        alert("Por favor, cole uma URL primeiro.");
+        return;
+    }
 
     btnScan.innerText = "Scanning...";
-    const result = await scanURL(url);
+    btnScan.disabled = true;
+
+    // Função scanURL vem do arquivo scanner.js
+    const data = await scanURL(url);
     
-    if (result) {
-        virtualFileSystem = result;
-        renderTree(result);
-        editor.setValue(result['index.html'].content);
-        monaco.editor.setModelLanguage(editor.getModel(), 'html');
-        updatePreview();
+    if (data) {
+        vfsGlobal = data;
+        buildFileTree(data);
+        
+        // Abre o index.html automaticamente após o scan
+        loadFileIntoEditor('index.html', 'html', 'root');
     }
+
     btnScan.innerText = "Scan";
+    btnScan.disabled = false;
 });
 
-// Atualiza preview ao digitar
-if (editor) {
-    editor.onDidChangeModelContent(() => {
-        updatePreview();
-    });
-}
+/**
+ * Listener de Atualização Real-time
+ * Sempre que você digitar no editor, o preview atualiza se for o index.html
+ */
+setInterval(() => {
+    if (typeof editor !== 'undefined' && tabTitle.innerText === 'index.html') {
+        const currentCode = editor.getValue();
+        // Só atualiza se o código mudou para não pesar o navegador
+        if (previewFrame.srcdoc !== currentCode) {
+            updateLivePreview(currentCode);
+        }
+    }
+}, 1500);
