@@ -2,30 +2,43 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Projeto Rubi | Colaborativo</title>
-    <link rel="stylesheet" href="css/main.css">
-    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+    <title>Rubi Code | VS Code P2P</title>
+    <link rel="stylesheet" href="css/editor.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.1/min/vs/loader.min.js"></script>
+    <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
 </head>
 <body>
 
-    <div class="container">
-        <header>
-            <h1 id="titulo">💎 Projeto Rubi</h1>
-            <p>Editando em tempo real via P2P</p>
-        </header>
+    <div id="app">
+        <aside id="sidebar">
+            <div class="logo">💎 Rubi Code</div>
+            
+            <div class="box">
+                <strong>MEU ID (Host):</strong>
+                <div id="meu-id">Gerando...</div>
+            </div>
 
-        <main class="card">
-            <h2>Bem-vindo ao VS Code Compartilhado</h2>
-            <p>Este projeto está conectado ao GitHub Original.</p>
-            <button id="btnInteragir">Clique aqui, parceiro!</button>
-        </main>
+            <div class="box">
+                <strong>ENTRAR NO PROJETO:</strong>
+                <input type="text" id="id-amigo-input" placeholder="Cole o ID aqui">
+                <button id="btn-conectar">CONECTAR</button>
+            </div>
 
-        <footer>
-            <p>Sincronizado com GitHub Pages</p>
-        </footer>
+            <nav class="file-explorer">
+                <p>ARQUIVOS</p>
+                <ul>
+                    <li class="active">📄 index.html</li>
+                    <li>🎨 main.css</li>
+                    <li>⚡ app.js</li>
+                </ul>
+            </nav>
+
+            <div id="status">Status: Desconectado</div>
+        </aside>
+
+        <main id="editor-container"></main>
     </div>
 
-    <script src="js/app.js"></script>
+    <script src="js/main.js"></script>
 </body>
 </html>
