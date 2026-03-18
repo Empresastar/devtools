@@ -3,13 +3,12 @@ window.onload = () => {
     let conn;
     let editor;
     let isLocalChange = true;
-    let arquivosDaPasta = [];
 
-    // 1. Iniciar Monaco Editor
+    // 1. Inicia o Motor do VS Code
     require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.1/min/vs' }});
     require(['vs/editor/editor.main'], function() {
         editor = monaco.editor.create(document.getElementById('editor-container'), {
-            value: "// Selecione um arquivo na lateral para editar",
+            value: "// 1. Clique em 'Abrir Pasta'\n// 2. Mande seu ID para o amigo\n// 3. Programem juntos!",
             language: 'javascript',
             theme: 'vs-dark',
             automaticLayout: true
@@ -22,80 +21,61 @@ window.onload = () => {
         });
     });
 
-    // 2. FUNÇÃO MÁGICA: Abrir pasta do computador
+    // 2. Abrir pasta do Computador (Igual VS Code)
     document.getElementById('btn-abrir-pasta').onclick = async () => {
         try {
-            // Abre o seletor de pastas do Windows/Mac
-            const directoryHandle = await window.showDirectoryPicker();
+            const dirHandle = await window.showDirectoryPicker();
             const listaUI = document.getElementById('lista-arquivos');
-            listaUI.innerHTML = ""; 
-            arquivosDaPasta = [];
+            listaUI.innerHTML = "";
+            let nomesArquivos = [];
 
-            for await (const entry of directoryHandle.values()) {
+            for await (const entry of dirHandle.values()) {
                 if (entry.kind === 'file') {
-                    arquivosDaPasta.push(entry.name);
+                    nomesArquivos.push(entry.name);
                     const li = document.createElement('li');
                     li.innerText = "📄 " + entry.name;
-                    li.onclick = () => carregarArquivo(entry);
+                    li.onclick = async () => {
+                        const file = await entry.getFile();
+                        const text = await file.text();
+                        isLocalChange = false;
+                        editor.setValue(text);
+                        isLocalChange = true;
+                        if (conn) conn.send({ type: 'OPEN', name: entry.name, content: text });
+                    };
                     listaUI.appendChild(li);
                 }
             }
-
-            // Envia a lista de arquivos para o amigo ver também
-            if (conn && conn.open) {
-                conn.send({ type: 'FILES', list: arquivosDaPasta });
-            }
-        } catch (err) {
-            console.error("Usuário cancelou ou erro:", err);
-        }
+            if (conn) conn.send({ type: 'LIST', files: nomesArquivos });
+        } catch (e) { console.log("Pasta não selecionada"); }
     };
-
-    async function carregarArquivo(fileHandle) {
-        const file = await fileHandle.getFile();
-        const content = await file.text();
-        isLocalChange = false;
-        editor.setValue(content);
-        isLocalChange = true;
-        
-        // Avisa o amigo para mudar o arquivo dele também
-        if (conn && conn.open) {
-            conn.send({ type: 'OPEN_FILE', fileName: fileHandle.name, content: content });
-        }
-    }
 
     // 3. Conexão P2P
     peer.on('open', id => document.getElementById('meu-id').innerText = id);
-
-    peer.on('connection', c => {
-        conn = c;
-        document.getElementById('status').innerText = "Conectado!";
-        setupReceiver();
+    peer.on('connection', c => { 
+        conn = c; 
+        document.getElementById('status').innerText = "Status: Amigo Conectado!";
+        setupSinc(); 
     });
 
     document.getElementById('btn-conectar').onclick = () => {
         const id = document.getElementById('id-amigo-input').value;
         conn = peer.connect(id);
-        setupReceiver();
+        setupSinc();
     };
 
-    function setupReceiver() {
+    function setupSinc() {
         conn.on('data', (data) => {
-            if (data.type === 'EDIT') {
-                isLocalChange = false;
+            isLocalChange = false;
+            if (data.type === 'EDIT' || data.type === 'OPEN') {
                 editor.setValue(data.content);
-                isLocalChange = true;
-            } 
-            if (data.type === 'FILES') {
-                // O amigo vê a lista de arquivos que você abriu
+                if(data.name) document.getElementById('status').innerText = "Editando: " + data.name;
+            }
+            if (data.type === 'LIST') {
                 const listaUI = document.getElementById('lista-arquivos');
-                listaUI.innerHTML = data.list.map(f => `<li>📄 ${f}</li>`).join('');
+                listaUI.innerHTML = data.files.map(f => `<li>📄 ${f}</li>`).join('');
             }
-            if (data.type === 'OPEN_FILE') {
-                isLocalChange = false;
-                editor.setValue(data.content);
-                isLocalChange = true;
-                alert("O Host abriu o arquivo: " + data.fileName);
-            }
+            isLocalChange = true;
         });
+        conn.on('open', () => document.getElementById('status').innerText = "Status: Sincronizado!");
     }
 };
