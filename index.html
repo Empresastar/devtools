@@ -2,139 +2,30 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>SISTEMA QUÂNTICO V5 - ANTI-CORS</title>
-    <style>
-        :root { --bg: #0d1117; --sidebar: #010409; --accent: #79c0ff; }
-        body { background: var(--bg); color: #c9d1d9; font-family: 'Fira Code', monospace; margin: 0; overflow: hidden; }
-        #app { display: flex; height: 100vh; }
-        #side { width: 320px; background: var(--sidebar); border-right: 1px solid #30363d; display: flex; flex-direction: column; }
-        .input-section { padding: 15px; background: #161b22; }
-        input { width: 100%; background: #0d1117; border: 1px solid #30363d; color: var(--accent); padding: 10px; border-radius: 6px; outline: none; margin-bottom: 10px; box-sizing: border-box; }
-        button { width: 100%; background: #238636; color: white; border: none; padding: 12px; cursor: pointer; font-weight: bold; border-radius: 6px; }
-        #tree { flex: 1; overflow-y: auto; padding: 10px; font-size: 12px; }
-        .folder { color: #d29922; font-weight: bold; margin: 15px 0 5px 0; text-transform: uppercase; font-size: 10px; }
-        .item { padding: 6px 10px; cursor: pointer; border-radius: 4px; color: #8b949e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .item:hover { background: #21262d; color: white; }
-        .item.active { background: #1f6feb; color: white; }
-        #editor-cont { flex: 1; display: flex; flex-direction: column; }
-        #monaco-editor { flex: 1; }
-        #preview { width: 400px; background: white; border-left: 1px solid #30363d; }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projeto Rubi | Colaborativo</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
 </head>
 <body>
 
-<div id="app">
-    <aside id="side">
-        <div class="input-section">
-            <input type="text" id="target-url" placeholder="https://exemplo.com">
-            <button id="scan-btn">DISPARAR VARREDURA</button>
-            <div id="log" style="font-size: 10px; color: #f85149; margin-top: 5px;"></div>
-        </div>
-        <div id="tree"></div>
-    </aside>
-    <main id="editor-cont">
-        <div id="monaco-editor"></div>
-    </main>
-    <section id="preview">
-        <iframe id="view-frame" style="width:100%; height:100%; border:none;"></iframe>
-    </section>
-</div>
+    <div class="container">
+        <header>
+            <h1 id="titulo">💎 Projeto Rubi</h1>
+            <p>Editando em tempo real via P2P</p>
+        </header>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs/loader.min.js"></script>
+        <main class="card">
+            <h2>Bem-vindo ao VS Code Compartilhado</h2>
+            <p>Este projeto está conectado ao GitHub Original.</p>
+            <button id="btnInteragir">Clique aqui, parceiro!</button>
+        </main>
 
-<script>
-    let editor, vfs = {};
-    const log = document.getElementById('log');
+        <footer>
+            <p>Sincronizado com GitHub Pages</p>
+        </footer>
+    </div>
 
-    // LISTA DE TÚNEIS (PROXIES) PARA PULAR O CORS
-    const proxyList = [
-        u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,
-        u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
-        u => `https://thingproxy.freeboard.io/fetch/${u}`
-    ];
-
-    require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs' }});
-    require(['vs/editor/editor.main'], function() {
-        editor = monaco.editor.create(document.getElementById('monaco-editor'), {
-            value: "// MOTOR PRONTO\n// SE O SITE FOR PROTEGIDO (EX: DISCORD), O PROXY PODE FALHAR.",
-            language: 'html', theme: 'vs-dark', automaticLayout: true
-        });
-    });
-
-    async function smartFetch(url) {
-        for (let getProxy of proxyList) {
-            try {
-                log.innerText = "Tentando túnel...";
-                const res = await fetch(getProxy(url));
-                if (!res.ok) continue;
-                
-                const data = await res.json();
-                // Alguns proxies retornam o HTML direto, outros dentro de .contents
-                return data.contents || data;
-            } catch (e) {
-                continue;
-            }
-        }
-        return null;
-    }
-
-    document.getElementById('scan-btn').onclick = async () => {
-        const url = document.getElementById('target-url').value;
-        if(!url) return;
-        
-        document.getElementById('scan-btn').innerText = "ATROPELANDO CORS...";
-        const raw = await smartFetch(url);
-
-        if(!raw || typeof raw !== 'string') {
-            log.innerText = "BLOQUEIO TOTAL: O site alvo é imune a proxies públicos.";
-            document.getElementById('scan-btn').innerText = "SCAN";
-            return;
-        }
-
-        log.innerText = "Sucesso!";
-        vfs = { '10. index.html': { c: raw, l: 'html' }, css: {}, js: {} };
-        
-        // Mapeamento Simples
-        const doc = new DOMParser().parseFromString(raw, 'text/html');
-        doc.querySelectorAll('link[rel="stylesheet"]').forEach((el, i) => {
-            vfs.css[`11. style_${i+1}.css`] = { c: `/* CSS de: ${el.href} */`, l: 'css' };
-        });
-        doc.querySelectorAll('script[src]').forEach((el, i) => {
-            vfs.js[`12. script_${i+1}.js`] = { c: `// JS de: ${el.src}`, l: 'javascript' };
-        });
-
-        renderTree();
-        editor.setValue(raw);
-        document.getElementById('view-frame').srcdoc = raw;
-        document.getElementById('scan-btn').innerText = "SCAN";
-    };
-
-    function renderTree() {
-        const tree = document.getElementById('tree');
-        tree.innerHTML = `<div class="folder">10. ROOT</div>`;
-        createItem('index.html', '10. index.html', 'html', 'root');
-        
-        if(Object.keys(vfs.css).length) {
-            tree.innerHTML += `<div class="folder">11. ESTILOS</div>`;
-            Object.keys(vfs.css).forEach(k => createItem(k, k, 'css', 'css'));
-        }
-        if(Object.keys(vfs.js).length) {
-            tree.innerHTML += `<div class="folder">12. SCRIPTS</div>`;
-            Object.keys(vfs.js).forEach(k => createItem(k, k, 'javascript', 'js'));
-        }
-    }
-
-    function createItem(label, key, lang, type) {
-        const div = document.createElement('div');
-        div.className = 'item';
-        div.innerText = label;
-        div.onclick = () => {
-            let code = (type === 'root') ? vfs['10. index.html'].c : vfs[type][key].c;
-            editor.setValue(code);
-            monaco.editor.setModelLanguage(editor.getModel(), lang);
-        };
-        document.getElementById('tree').appendChild(div);
-    }
-</script>
+    <script src="js/app.js"></script>
 </body>
 </html>
