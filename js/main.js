@@ -4,16 +4,19 @@ window.onload = () => {
     let editor;
     let isLocalChange = true;
 
-    // 1. Inicia o Motor do VS Code
     require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.1/min/vs' }});
     require(['vs/editor/editor.main'], function() {
+        // Criando o editor com syntax highlighting
         editor = monaco.editor.create(document.getElementById('editor-container'), {
-            value: "// 1. Clique em 'Abrir Pasta'\n// 2. Mande seu ID para o amigo\n// 3. Programem juntos!",
-            language: 'javascript',
+            value: "// Rubi Code aberto. Selecione um arquivo.",
+            language: 'javascript', 
             theme: 'vs-dark',
-            automaticLayout: true
+            automaticLayout: true,
+            fontSize: 14,
+            fontFamily: 'Consolas, monospace'
         });
 
+        // Envia as edições via P2P
         editor.onDidChangeModelContent(() => {
             if (isLocalChange && conn && conn.open) {
                 conn.send({ type: 'EDIT', content: editor.getValue() });
@@ -21,45 +24,44 @@ window.onload = () => {
         });
     });
 
-    // 2. Abrir pasta do Computador (Igual VS Code)
+    // Abrir pasta real e listar arquivos
     document.getElementById('btn-abrir-pasta').onclick = async () => {
-        try {
-            const dirHandle = await window.showDirectoryPicker();
-            const listaUI = document.getElementById('lista-arquivos');
-            listaUI.innerHTML = "";
-            let nomesArquivos = [];
+        const dirHandle = await window.showDirectoryPicker();
+        const lista = document.getElementById('lista-arquivos');
+        lista.innerHTML = "";
 
-            for await (const entry of dirHandle.values()) {
-                if (entry.kind === 'file') {
-                    nomesArquivos.push(entry.name);
-                    const li = document.createElement('li');
-                    li.innerText = "📄 " + entry.name;
-                    li.onclick = async () => {
-                        const file = await entry.getFile();
-                        const text = await file.text();
-                        isLocalChange = false;
-                        editor.setValue(text);
-                        isLocalChange = true;
-                        if (conn) conn.send({ type: 'OPEN', name: entry.name, content: text });
-                    };
-                    listaUI.appendChild(li);
-                }
+        for await (const entry of dirHandle.values()) {
+            if (entry.kind === 'file') {
+                const li = document.createElement('li');
+                li.innerText = "📄 " + entry.name;
+                li.onclick = async () => {
+                    const file = await entry.getFile();
+                    const text = await file.text();
+                    
+                    // Detecta linguagem pelo nome do arquivo (ex: .html)
+                    const ext = entry.name.split('.').pop();
+                    let lang = 'javascript';
+                    if(ext === 'html') lang = 'html';
+                    if(ext === 'css') lang = 'css';
+
+                    isLocalChange = false;
+                    monaco.editor.setModelLanguage(editor.getModel(), lang);
+                    editor.setValue(text);
+                    document.getElementById('tab-name').innerText = entry.name;
+                    isLocalChange = true;
+
+                    if (conn) conn.send({ type: 'OPEN', name: entry.name, content: text, lang: lang });
+                };
+                lista.appendChild(li);
             }
-            if (conn) conn.send({ type: 'LIST', files: nomesArquivos });
-        } catch (e) { console.log("Pasta não selecionada"); }
+        }
     };
 
-    // 3. Conexão P2P
+    // PeerJS (P2P)
     peer.on('open', id => document.getElementById('meu-id').innerText = id);
-    peer.on('connection', c => { 
-        conn = c; 
-        document.getElementById('status').innerText = "Status: Amigo Conectado!";
-        setupSinc(); 
-    });
-
+    peer.on('connection', c => { conn = c; setupSinc(); });
     document.getElementById('btn-conectar').onclick = () => {
-        const id = document.getElementById('id-amigo-input').value;
-        conn = peer.connect(id);
+        conn = peer.connect(document.getElementById('id-amigo-input').value);
         setupSinc();
     };
 
@@ -67,15 +69,11 @@ window.onload = () => {
         conn.on('data', (data) => {
             isLocalChange = false;
             if (data.type === 'EDIT' || data.type === 'OPEN') {
+                if(data.lang) monaco.editor.setModelLanguage(editor.getModel(), data.lang);
                 editor.setValue(data.content);
-                if(data.name) document.getElementById('status').innerText = "Editando: " + data.name;
-            }
-            if (data.type === 'LIST') {
-                const listaUI = document.getElementById('lista-arquivos');
-                listaUI.innerHTML = data.files.map(f => `<li>📄 ${f}</li>`).join('');
+                if(data.name) document.getElementById('tab-name').innerText = data.name;
             }
             isLocalChange = true;
         });
-        conn.on('open', () => document.getElementById('status').innerText = "Status: Sincronizado!");
     }
 };
