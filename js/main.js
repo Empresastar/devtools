@@ -1,29 +1,34 @@
 window.onload = async () => {
-    // 1. Inicia o Editor (Cores)
+    // Inicia o motor do editor
     await EditorModule.init('monaco-editor');
 
-    // 2. Inicia o P2P (ID)
-    P2PModule.init((dados) => {
-        // Quando receber código do amigo
-        if (dados.type === 'CODE') {
-            EditorModule.instance.setValue(dados.content);
+    // Inicia o P2P e escuta o amigo
+    P2PModule.init((data) => {
+        if (data.type === 'EDIT') {
+            const pos = EditorModule.instance.getPosition();
+            EditorModule.instance.setValue(data.content);
+            EditorModule.instance.setPosition(pos);
+        }
+        if (data.type === 'OPEN_FILE') {
+            EditorModule.instance.setValue(data.content);
+            EditorModule.setLanguage(data.name);
+            document.getElementById('active-filename').innerText = data.name;
         }
     });
 
-    // 3. Configura o botão de Conectar
+    // Configura Botões
+    document.getElementById('open-folder-btn').onclick = () => FilesModule.openFolder();
+    document.getElementById('preview-btn').onclick = () => EditorModule.runPreview();
+    
     document.getElementById('connect-btn').onclick = () => {
         const id = document.getElementById('peer-id-input').value;
-        P2PModule.connect(id, (dados) => {
-            if (dados.type === 'CODE') {
-                EditorModule.instance.setValue(dados.content);
-            }
-        });
+        P2PModule.connect(id, (data) => { /* recebe os mesmos dados */ });
     };
 
-    // 4. Enviar código enquanto digita
+    // Sincroniza Digitação (O que você faz, o outro vê)
     EditorModule.instance.onDidChangeModelContent(() => {
         P2PModule.send({
-            type: 'CODE',
+            type: 'EDIT',
             content: EditorModule.instance.getValue()
         });
     });
