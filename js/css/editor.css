@@ -32,11 +32,6 @@ button {
 
 button:hover { background: #ff1a75; }
 
-.file-explorer p { font-size: 0.7rem; color: #858585; margin-bottom: 10px; }
-.file-explorer ul { list-style: none; padding: 0; margin: 0; }
-.file-explorer li { padding: 5px 10px; cursor: pointer; font-size: 0.9rem; }
-.file-explorer li.active { background: #37373d; border-radius: 3px; }
-
 #editor-container { flex-grow: 1; height: 100%; }
 
 #status { font-size: 0.7rem; color: #888; margin-top: auto; }
