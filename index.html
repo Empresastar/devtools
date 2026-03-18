@@ -3,17 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meu Projeto Online</title>
-    <link rel="stylesheet" href="assets/css/style.css">
+    <title>Meu VS Code URL Scanner</title>
+    <link rel="stylesheet" href="assets/css/main.css">
 </head>
 <body>
 
-    <h1>🚀 Projeto Organizado</h1>
-    <p>Este site está rodando direto do GitHub Pages!</p>
-    
-    <div id="status">Aguardando comando...</div>
-    <button id="btn-acao">Clique aqui</button>
+    <div id="app-container">
+        <aside id="sidebar">
+            <div class="sidebar-header">
+                <span>EXPLORER</span>
+            </div>
+            <div class="url-input-container">
+                <input type="text" id="url-input" placeholder="Cole a URL aqui...">
+                <button id="btn-scan">Scan</button>
+            </div>
+            <nav id="file-tree">
+                <div class="folder-root">1. PROJETO-RAIZ</div>
+                <div id="tree-content">
+                    </div>
+            </nav>
+        </aside>
 
-    <script src="assets/js/script.js"></script>
+        <main id="editor-wrapper">
+            <header id="tabs-bar">
+                <div class="tab active">index.html</div>
+            </header>
+            <div id="monaco-editor"></div>
+        </main>
+
+        <section id="preview-panel">
+            <div class="preview-header">LIVE PREVIEW</div>
+            <iframe id="preview-frame"></iframe>
+        </section>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs/loader.min.js"></script>
+    
+    <script src="assets/js/monaco-init.js"></script>
+    <script src="assets/js/app.js"></script>
 </body>
 </html>
