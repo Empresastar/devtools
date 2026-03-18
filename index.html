@@ -2,33 +2,31 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Rubi Code | Explorador P2P</title>
+    <title>Rubi Code | VS Code P2P Original</title>
     <link rel="stylesheet" href="css/editor.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.1/min/vs/loader.min.js"></script>
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
 </head>
 <body>
-
     <div id="app">
         <aside id="sidebar">
             <div class="logo">💎 Rubi Code</div>
             
-            <button id="btn-abrir-pasta" style="background: #2d2d2d; border: 1px solid #555;">📁 Abrir Pasta do PC</button>
+            <button id="btn-abrir-pasta">📁 Abrir Pasta do Projeto</button>
 
             <div class="box">
                 <strong>MEU ID (Host):</strong>
-                <div id="meu-id">...</div>
+                <div id="meu-id">Gerando...</div>
             </div>
 
             <div class="box">
                 <input type="text" id="id-amigo-input" placeholder="ID do Host">
-                <button id="btn-conectar">ENTRAR</button>
+                <button id="btn-conectar">ENTRAR NO PROJETO</button>
             </div>
 
             <nav class="file-explorer">
-                <p>EXPLORADOR (PASTA)</p>
-                <ul id="lista-arquivos">
-                    </ul>
+                <p>EXPLORADOR</p>
+                <ul id="lista-arquivos"></ul>
             </nav>
 
             <div id="status">Status: Offline</div>
@@ -36,7 +34,6 @@
 
         <main id="editor-container"></main>
     </div>
-
     <script src="js/main.js"></script>
 </body>
 </html>
