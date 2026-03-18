@@ -1,48 +1,42 @@
-body, html {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    background-color: #1e1e1e;
-    color: white;
-    font-family: 'Segoe UI', sans-serif;
-    overflow: hidden;
+body, html { 
+    margin: 0; padding: 0; height: 100%; 
+    background: #1e1e1e; color: #fff; 
+    font-family: 'Segoe UI', sans-serif; overflow: hidden; 
 }
 
-#app-container {
-    display: flex;
-    height: 100vh;
+#app { display: flex; height: 100vh; }
+
+#sidebar { 
+    width: 260px; background: #252526; 
+    border-right: 1px solid #333; padding: 20px; 
+    display: flex; flex-direction: column; gap: 15px; 
 }
 
-#sidebar {
-    width: 250px;
-    background-color: #252526;
-    display: flex;
-    flex-direction: column;
-    padding: 15px;
-    border-right: 1px solid #333;
+.logo { color: #e0115f; font-weight: bold; font-size: 1.2rem; }
+
+.box { background: #333; padding: 12px; border-radius: 5px; font-size: 0.8rem; }
+
+#meu-id { color: #00ffcc; font-weight: bold; margin-top: 5px; word-break: break-all; }
+
+input { 
+    width: 100%; padding: 8px; margin-top: 5px; 
+    background: #3c3c3c; border: 1px solid #555; 
+    color: white; border-radius: 3px; box-sizing: border-box; 
 }
 
-#container-editor {
-    flex-grow: 1;
-    height: 100%;
+button { 
+    width: 100%; padding: 10px; background: #e0115f; 
+    color: white; border: none; border-radius: 3px; 
+    cursor: pointer; font-weight: bold; margin-top: 5px; 
 }
 
-button {
-    background-color: #e0115f; /* Rubi */
-    color: white;
-    border: none;
-    padding: 10px;
-    margin-bottom: 10px;
-    cursor: pointer;
-    border-radius: 4px;
-}
+button:hover { background: #ff1a75; }
 
-button:hover { background-color: #ff1a75; }
+.file-explorer p { font-size: 0.7rem; color: #858585; margin-bottom: 10px; }
+.file-explorer ul { list-style: none; padding: 0; margin: 0; }
+.file-explorer li { padding: 5px 10px; cursor: pointer; font-size: 0.9rem; }
+.file-explorer li.active { background: #37373d; border-radius: 3px; }
 
-input {
-    background: #3c3c3c;
-    border: 1px solid #555;
-    color: white;
-    padding: 8px;
-    margin-bottom: 10px;
-}
+#editor-container { flex-grow: 1; height: 100%; }
+
+#status { font-size: 0.7rem; color: #888; margin-top: auto; }
