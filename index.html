@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meu VS Code URL Scanner</title>
-    <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="./assets/css/main.css">
 </head>
 <body>
 
     <div id="app-container">
         <aside id="sidebar">
             <div class="sidebar-header">
-                <span>EXPLORER (v1.0)</span>
+                <span>EXPLORER (v1.1)</span>
             </div>
             <div class="url-input-container">
                 <input type="text" id="url-input" placeholder="https://exemplo.com">
@@ -40,13 +40,12 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs/loader.min.js"></script>
     
-    <script src="assets/js/monaco-init.js" onerror="console.error('ERRO: monaco-init.js não encontrado em assets/js/')"></script>
-    <script src="assets/js/scanner.js" onerror="console.error('ERRO: scanner.js não encontrado em assets/js/')"></script>
-    <script src="assets/js/app.js" onerror="console.error('ERRO: app.js não encontrado em assets/js/')"></script>
+    <script src="./assets/js/monaco-init.js" onerror="console.error('ERRO: monaco-init.js não encontrado!')"></script>
+    <script src="./assets/js/scanner.js" onerror="console.error('ERRO: scanner.js não encontrado!')"></script>
+    <script src="./assets/js/app.js" onerror="console.error('ERRO: app.js não encontrado!')"></script>
 
     <script>
-        // Script de verificação rápida
-        console.log("Sistema de pastas carregando...");
+        console.log("Tentando carregar arquivos de: " + window.location.href);
     </script>
 </body>
 </html>
