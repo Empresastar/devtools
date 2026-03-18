@@ -3,29 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DevTools VS Code - Anti-Bug</title>
-    <link rel="stylesheet" href="assets/css/main.css">
+    <title>DevTools VS Code - Fix</title>
     <style>
-        /* CSS de Emergência caso o arquivo externo falhe */
         body { background: #1e1e1e; color: white; font-family: 'Segoe UI', sans-serif; margin: 0; overflow: hidden; }
         #app-container { display: flex; height: 100vh; width: 100vw; }
         #sidebar { width: 260px; background: #252526; border-right: 1px solid #333; display: flex; flex-direction: column; }
         #editor-wrapper { flex: 1; display: flex; flex-direction: column; }
         #monaco-editor { flex: 1; }
-        #preview-panel { width: 400px; background: white; border-left: 1px solid #333; }
+        #preview-panel { width: 450px; background: white; border-left: 1px solid #333; }
         .url-input-container { padding: 10px; display: flex; gap: 5px; background: #2d2d2d; }
-        input { background: #3c3c3c; border: 1px solid #555; color: white; padding: 5px; flex: 1; font-size: 12px; }
-        button { background: #0e639c; color: white; border: none; padding: 5px 10px; cursor: pointer; font-weight: bold; }
-        .file { padding: 5px 15px; cursor: pointer; font-size: 13px; }
-        .file:hover { background: #2a2d2e; }
-        .folder-root { padding: 10px; font-weight: bold; color: #858585; font-size: 11px; }
+        input { background: #3c3c3c; border: 1px solid #555; color: white; padding: 8px; flex: 1; font-size: 12px; }
+        button { background: #0e639c; color: white; border: none; padding: 5px 15px; cursor: pointer; font-weight: bold; }
+        .file { padding: 8px 15px; cursor: pointer; font-size: 13px; color: #ccc; }
+        .file:hover { background: #2a2d2e; color: white; }
+        .folder-root { padding: 12px; font-weight: bold; color: #858585; font-size: 11px; text-transform: uppercase; }
+        #tab-title { height: 35px; background: #2d2d2d; display: flex; align-items: center; padding: 0 15px; font-size: 12px; border-bottom: 1px solid #1e1e1e; }
     </style>
 </head>
 <body>
 
     <div id="app-container">
         <aside id="sidebar">
-            <div class="folder-root">EXPLORER</div>
+            <div class="folder-root">Explorer</div>
             <div class="url-input-container">
                 <input type="text" id="url-input" placeholder="https://exemplo.com">
                 <button id="btn-scan">Scan</button>
@@ -34,7 +33,7 @@
         </aside>
 
         <main id="editor-wrapper">
-            <div style="height: 35px; background: #2d2d2d; display: flex; align-items: center; padding: 0 15px; font-size: 12px; border-bottom: 1px solid #1e1e1e;" id="tab-title">index.html</div>
+            <div id="tab-title">index.html</div>
             <div id="monaco-editor"></div>
         </main>
 
@@ -45,8 +44,8 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs/loader.min.js"></script>
     
-    <script src="assets/js/monaco-init.js" onerror="this.src='monaco-init.js'"></script>
-    <script src="assets/js/scanner.js" onerror="this.src='scanner.js'"></script>
-    <script src="assets/js/app.js" onerror="this.src='app.js'"></script>
+    <script src="monaco-init.js"></script>
+    <script src="scanner.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
