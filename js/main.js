@@ -1,41 +1,48 @@
 window.onload = async () => {
-    let isRemoteChange = false; // Trava para evitar loop infinito de mensagens
+    let isRemoteUpdate = false; // Bloqueio para evitar loop de sincronização
 
+    // 1. Inicia o Editor
     await EditorModule.init('monaco-editor');
 
+    // 2. Inicia o P2P e define o que fazer ao receber dados do outro
     P2PModule.init((data) => {
-        if (data.type === 'EDIT') {
-            isRemoteChange = true; // Avisa que a mudança veio de fora
-            const currentPos = EditorModule.instance.getPosition();
+        if (data.type === 'SYNC_CODE') {
+            isRemoteUpdate = true; // Trava o envio local
+            
+            const currentPosition = EditorModule.instance.getPosition();
             EditorModule.instance.setValue(data.content);
-            EditorModule.instance.setPosition(currentPos);
-            isRemoteChange = false;
+            EditorModule.instance.setPosition(currentPosition); // Mantém o cursor onde estava
+            
+            isRemoteUpdate = false; // Destrava
         }
-        if (data.type === 'OPEN_FILE') {
-            isRemoteChange = true;
+        
+        if (data.type === 'FILE_OPENED') {
+            isRemoteUpdate = true;
             EditorModule.instance.setValue(data.content);
             EditorModule.setLanguage(data.name);
             document.getElementById('active-filename').innerText = data.name;
-            isRemoteChange = false;
+            isRemoteUpdate = false;
         }
     });
 
-    // Configuração dos Botões
-    document.getElementById('open-folder-btn').onclick = () => FilesModule.openFolder();
-    document.getElementById('preview-btn').onclick = () => EditorModule.runPreview();
-    
-    document.getElementById('connect-btn').onclick = () => {
-        const inputId = document.getElementById('peer-id-input').value;
-        P2PModule.connect(inputId, (data) => { /* Processa igual ao init */ });
-    };
-
-    // SINCRONIZAÇÃO: Envia o código se a mudança for LOCAL (você digitando)
+    // 3. Captura cada mudança no código (como se fosse um chat de texto)
     EditorModule.instance.onDidChangeModelContent(() => {
-        if (!isRemoteChange) {
+        if (!isRemoteUpdate) {
             P2PModule.send({
-                type: 'EDIT',
+                type: 'SYNC_CODE',
                 content: EditorModule.instance.getValue()
             });
         }
     });
+
+    // 4. Configura os botões da Interface
+    document.getElementById('open-folder-btn').onclick = () => FilesModule.openFolder();
+    document.getElementById('preview-btn').onclick = () => EditorModule.runPreview();
+    
+    document.getElementById('connect-btn').onclick = () => {
+        const targetId = document.getElementById('peer-id-input').value;
+        P2PModule.connect(targetId, (data) => {
+            // A lógica de recebimento é a mesma do init
+        });
+    };
 };
