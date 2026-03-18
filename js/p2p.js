@@ -10,18 +10,16 @@ const P2PModule = {
             if (display) display.innerText = id;
         });
 
+        // Quando alguém conecta no seu ID
         this.peer.on('connection', (conn) => {
             this.setupConn(conn, onDataReceived);
         });
 
-        this.peer.on('error', (err) => {
-            console.error("Erro P2P:", err);
-            document.getElementById('display-id').innerText = "Erro";
-        });
+        this.peer.on('error', (err) => console.error("Erro P2P:", err));
     },
 
     connect(targetId, onDataReceived) {
-        if (!targetId) return alert("Digite o ID do amigo!");
+        if (!targetId) return alert("Insira o ID do parceiro!");
         const conn = this.peer.connect(targetId);
         this.setupConn(conn, onDataReceived);
     },
@@ -30,26 +28,15 @@ const P2PModule = {
         this.connection = conn;
         
         conn.on('open', () => {
-            const statusLabel = document.getElementById('sync-status');
-            if (statusLabel) {
-                statusLabel.innerText = "🟢 Conectado com Parceiro";
-                statusLabel.style.background = "#28a745";
-                statusLabel.style.color = "white";
-                statusLabel.style.padding = "2px 8px";
-                statusLabel.style.borderRadius = "4px";
+            const status = document.getElementById('sync-status');
+            if (status) {
+                status.innerText = "🟢 Sincronizado";
+                status.style.color = "#00ffcc";
             }
-            alert("Rubi Code: Conexão estabelecida! Ambos podem editar.");
+            console.log("Sistema de Sincronização Ativo!");
         });
 
         conn.on('data', (data) => onDataReceived(data));
-
-        conn.on('close', () => {
-            const statusLabel = document.getElementById('sync-status');
-            if (statusLabel) {
-                statusLabel.innerText = "🔴 Desconectado";
-                statusLabel.style.background = "#dc3545";
-            }
-        });
     },
 
     send(data) {
