@@ -2,7 +2,8 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Rubi Code | Editor P2P</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rubi Code | VS Code P2P</title>
     <link rel="stylesheet" href="css/editor.css">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.1/min/vs/loader.min.js"></script>
@@ -15,17 +16,17 @@
             <div class="logo">💎 Rubi Code</div>
             
             <div class="box">
-                <strong>MEU ID (Host):</strong>
-                <div id="meu-id">Gerando...</div>
+                <strong>MEU ID (Mande ao amigo):</strong>
+                <div id="meu-id">Gerando ID...</div>
             </div>
 
             <div class="box">
-                <strong>ID DO AMIGO:</strong>
+                <strong>CONECTAR NO AMIGO:</strong>
                 <input type="text" id="id-amigo-input" placeholder="Cole o ID aqui">
-                <button id="btn-conectar">CONECTAR</button>
+                <button id="btn-conectar">ENTRAR NO PROJETO</button>
             </div>
 
-            <div id="status">Status: Desconectado</div>
+            <div id="status">Status: Aguardando...</div>
         </aside>
 
         <main id="editor-container"></main>
