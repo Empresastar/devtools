@@ -1,4 +1,5 @@
 async function scanURL(url) {
+    // Proxy para evitar bloqueio de segurança
     const proxy = "https://api.allorigins.win/get?url=";
     try {
         const response = await fetch(proxy + encodeURIComponent(url));
@@ -14,17 +15,21 @@ async function scanURL(url) {
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, 'text/html');
 
+        // Pega os arquivos de estilo
         doc.querySelectorAll('link[rel="stylesheet"]').forEach((l, i) => {
-            vfs.css[`style_${i+1}.css`] = { lang: 'css', content: `/* CSS de: ${l.href} */` };
+            const fileName = `11. style_${i+1}.css`;
+            vfs.css[fileName] = { lang: 'css', content: `/* Origem: ${l.href} */\n/* O código CSS apareceria aqui */` };
         });
 
+        // Pega os arquivos de script
         doc.querySelectorAll('script[src]').forEach((s, i) => {
-            vfs.js[`script_${i+1}.js`] = { lang: 'javascript', content: `// Script de: ${s.src}` };
+            const fileName = `12. script_${i+1}.js`;
+            vfs.js[fileName] = { lang: 'javascript', content: `// Origem: ${s.src}\n// O código JS apareceria aqui` };
         });
 
         return vfs;
     } catch (e) {
-        alert("Erro no Scan!");
+        alert("Erro ao acessar o site. Verifique a URL.");
         return null;
     }
 }
