@@ -5,7 +5,9 @@ const FilesModule = {
         try {
             this.folderHandle = await window.showDirectoryPicker();
             await this.renderFileList();
-        } catch (err) { console.log("Ação cancelada."); }
+        } catch (err) { 
+            console.warn("Acesso negado."); 
+        }
     },
 
     async renderFileList() {
@@ -16,6 +18,7 @@ const FilesModule = {
             if (entry.kind === 'file') {
                 const li = document.createElement('li');
                 li.innerText = "📄 " + entry.name;
+                li.style.cursor = "pointer";
                 li.onclick = () => this.loadFile(entry);
                 listUI.appendChild(li);
             }
@@ -24,29 +27,21 @@ const FilesModule = {
 
     async createFile() {
         if (!this.folderHandle) return alert("Abra uma pasta primeiro!");
-        
-        const fileName = prompt("Digite o nome com a extensão (ex: index.html, style.css, app.py):");
+        const fileName = prompt("Nome do arquivo (ex: index.html):");
         if (!fileName) return;
-
         try {
             const fileHandle = await this.folderHandle.getFileHandle(fileName, { create: true });
             await this.renderFileList();
             await this.loadFile(fileHandle);
-        } catch (err) { alert("Erro: " + err); }
+        } catch (err) { console.error(err); }
     },
 
     async loadFile(fileHandle) {
         const file = await fileHandle.getFile();
         const content = await file.text();
-        
         EditorModule.instance.setValue(content);
-        EditorModule.setLanguage(fileHandle.name); // Define a cor baseada no nome
+        EditorModule.setLanguage(fileHandle.name);
         document.getElementById('active-filename').innerText = fileHandle.name;
-
-        P2PModule.send({
-            type: 'FILE',
-            name: fileHandle.name,
-            content: content
-        });
+        P2PModule.send({ type: 'FILE', name: fileHandle.name, content: content });
     }
 };
