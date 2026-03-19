@@ -2,43 +2,31 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Rubi Code | Professional Edition</title>
+    <title>Rubi Code | Collab Editor</title>
     <link rel="stylesheet" href="css/style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.1/min/vs/loader.min.js"></script>
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
 </head>
 <body>
-    <div id="vs-app">
-        <aside id="activity-bar">
-            <div class="nav-icon active" title="Explorador">📄</div>
-            <div class="nav-icon" title="P2P">🌐</div>
-        </aside>
-
+    <div id="app">
         <aside id="sidebar">
-            <div class="sidebar-header">
-                <span>EXPLORADOR</span>
-                <div class="file-actions">
-                    <button id="new-file-btn" title="Novo Arquivo">📄+</button>
-                    <button id="open-folder-btn" title="Abrir Pasta">📁</button>
-                </div>
+            <div class="menu-item">
+                <button id="open-folder-btn">📁 Abrir Pasta</button>
+                <button id="create-file-btn">📄 Novo Arquivo</button>
             </div>
-            
-            <div id="p2p-panel" class="panel">
-                <div class="id-tag">Seu ID: <b id="display-id">...</b></div>
-                <input type="text" id="peer-id-input" placeholder="ID do Amigo">
-                <button id="connect-btn">Conectar P2P</button>
+            <div class="p2p-panel">
+                <p>Seu ID: <b id="display-id">...</b></p>
+                <input type="text" id="peer-id-input" placeholder="ID do parceiro">
+                <button id="connect-btn">Conectar</button>
+                <div id="sync-status">Offline</div>
             </div>
-
             <ul id="file-list"></ul>
         </aside>
-
-        <main id="editor-workspace">
-            <div id="tab-bar"><div class="tab active" id="active-filename">vazio.js</div></div>
+        <main id="editor-container">
+            <header id="tab-bar">
+                <span id="active-filename">Bem-vindo ao Rubi Code</span>
+            </header>
             <div id="monaco-editor"></div>
-            <footer id="status-bar">
-                <span id="sync-status">Offline</span>
-                <span id="lang-status">JavaScript</span>
-            </footer>
         </main>
     </div>
 
