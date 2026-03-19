@@ -1,10 +1,15 @@
 window.onload = async () => {
     let isRemoteUpdate = false; 
 
-    // Tenta iniciar o editor na div 'monaco-editor'
-    await EditorModule.init('monaco-editor').catch(() => alert("Erro ao carregar editor"));
+    await EditorModule.init('monaco-editor').catch(() => console.error("Erro Editor"));
 
     const handleData = (data) => {
+        // SINCRONIZA A LISTA DE ARQUIVOS (Para o Client ver a pasta)
+        if (data.type === 'FOLDER_SYNC') {
+            FilesModule.renderFileList(data.files);
+        }
+
+        // SINCRONIZA O CONTEÚDO DO EDITOR E NOME DO ARQUIVO
         if (data.type === 'SYNC' || data.type === 'FILE') {
             isRemoteUpdate = true;
             if (data.type === 'FILE') {
