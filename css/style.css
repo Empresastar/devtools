@@ -1,79 +1,125 @@
-:root {
-    --bg-dark: #1e1e1e;
-    --bg-sidebar: #252526;
-    --bg-activity: #333333;
-    --accent: #e0115f; /* Cor Rubi */
-    --text-muted: #858585;
-    --border: #333333;
+/* Reset básico */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-body, html { 
-    margin: 0; padding: 0; height: 100%; 
-    background: var(--bg-dark); color: #fff; 
-    font-family: 'Segoe UI', sans-serif; overflow: hidden; 
+body, html {
+    height: 100%;
+    background-color: #1e1e1e;
+    color: #cccccc;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    overflow: hidden;
 }
 
-#vs-app { display: flex; height: 100vh; }
-
-/* Barra de Ícones Lateral */
-#activity-bar { 
-    width: 50px; background: var(--bg-activity); 
-    display: flex; flex-direction: column; align-items: center; 
-    padding-top: 15px; gap: 20px; 
+#app {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
 }
 
-.nav-icon { font-size: 22px; cursor: pointer; opacity: 0.4; transition: 0.2s; }
-.nav-icon:hover { opacity: 0.8; }
-.nav-icon.active { opacity: 1; border-left: 2px solid var(--accent); width: 100%; text-align: center; }
-
-/* Sidebar */
-#sidebar { 
-    width: 260px; background: var(--bg-sidebar); 
-    display: flex; flex-direction: column; border-right: 1px solid var(--border); 
+/* Barra Lateral (Sidebar) */
+#sidebar {
+    width: 260px;
+    background-color: #252526;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #333;
+    padding: 10px;
 }
 
-.sidebar-header { 
-    padding: 10px 15px; font-size: 11px; font-weight: bold; 
-    color: var(--text-muted); display: flex; justify-content: space-between; 
+.menu-item {
+    margin-bottom: 15px;
 }
 
-.file-actions button {
-    background: transparent; border: none; color: #ccc; 
-    cursor: pointer; font-size: 14px; padding: 2px 5px;
+button {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 5px;
+    background-color: #0e639c;
+    color: white;
+    border: none;
+    border-radius: 2px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background 0.2s;
 }
 
-.file-actions button:hover { color: var(--accent); }
+button:hover {
+    background-color: #1177bb;
+}
 
-/* P2P Panel */
-.panel { padding: 15px; background: #2d2d2d; margin: 10px; border-radius: 4px; font-size: 12px; }
-.id-tag { margin-bottom: 8px; color: #4ec9b0; }
-#peer-id-input { 
-    width: 100%; background: #3c3c3c; border: 1px solid #555; 
-    color: white; padding: 5px; border-radius: 2px; margin-bottom: 5px;
+/* Painel P2P */
+.p2p-panel {
+    background-color: #333333;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    font-size: 12px;
+}
+
+#peer-id-input {
+    width: 100%;
+    background: #3c3c3c;
+    border: 1px solid #555;
+    color: white;
+    padding: 5px;
+    margin: 8px 0;
+}
+
+#sync-status {
+    font-weight: bold;
+    margin-top: 5px;
+    text-align: center;
 }
 
 /* Lista de Arquivos */
-#file-list { list-style: none; padding: 0; margin: 0; flex-grow: 1; overflow-y: auto; }
-#file-list li { 
-    padding: 5px 20px; font-size: 13px; cursor: pointer; 
-    color: #ccc; display: flex; align-items: center; gap: 8px;
+#file-list {
+    list-style: none;
+    flex: 1;
+    overflow-y: auto;
+    margin-top: 10px;
 }
-#file-list li:hover { background: #2a2d2e; }
-#file-list li.active { background: #37373d; color: white; }
 
-/* Workspace */
-#editor-workspace { flex-grow: 1; display: flex; flex-direction: column; }
-#tab-bar { height: 35px; background: var(--bg-sidebar); display: flex; }
-.tab { 
-    padding: 8px 20px; background: #2d2d2d; font-size: 12px; 
-    border-right: 1px solid #1e1e1e; cursor: pointer; display: flex; align-items: center;
+#file-list li {
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border-radius: 3px;
 }
-.tab.active { background: var(--bg-dark); border-top: 1px solid var(--accent); }
 
-#monaco-editor { flex-grow: 1; width: 100%; }
+#file-list li:hover {
+    background-color: #2a2d2e;
+}
 
-#status-bar { 
-    height: 22px; background: var(--accent); 
-    display: flex; justify-content: space-between; 
-    align-items: center; padding: 0 10px; font-size: 12px; 
+/* Área do Editor */
+#editor-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: #1e1e1e;
+}
+
+#tab-bar {
+    height: 35px;
+    background-color: #2d2d2d;
+    display: flex;
+    align-items: center;
+    padding: 0 15px;
+    border-bottom: 1px solid #1e1e1e;
+}
+
+#active-filename {
+    font-size: 12px;
+    color: #969696;
+    text-transform: lowercase;
+}
+
+#monaco-editor {
+    flex: 1;
+    width: 100%;
 }
