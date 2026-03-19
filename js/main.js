@@ -3,21 +3,28 @@ window.onload = async () => {
 
     await EditorModule.init('monaco-editor');
 
-    // FUNÇÃO QUE TRATA O RECEBIMENTO (Igual para Host e Client)
     const handleData = (data) => {
         if (data.type === 'SYNC') {
-            isRemoteUpdate = true; // Bloqueia o envio enquanto atualiza o que recebeu
+            isRemoteUpdate = true;
             const pos = EditorModule.instance.getPosition();
             EditorModule.instance.setValue(data.content);
-            EditorModule.instance.setPosition(pos); // Mantém o cursor no lugar
-            setTimeout(() => { isRemoteUpdate = false; }, 50); // Destrava após a escrita
+            EditorModule.instance.setPosition(pos);
+            setTimeout(() => { isRemoteUpdate = false; }, 50);
+        }
+        // Quando o HOST abre uma pasta/arquivo, o CLIENT recebe aqui:
+        if (data.type === 'FILE') {
+            isRemoteUpdate = true;
+            EditorModule.instance.setValue(data.content);
+            EditorModule.setLanguage(data.name);
+            const nameDisplay = document.getElementById('active-filename');
+            if (nameDisplay) nameDisplay.innerText = data.name;
+            setTimeout(() => { isRemoteUpdate = false; }, 50);
         }
     };
 
-    // Inicia o P2P passando a função de tratar dados
     P2PModule.init(handleData);
 
-    // Botões com proteção contra erro NULL
+    // Botões
     const btnFolder = document.getElementById('open-folder-btn');
     if (btnFolder) btnFolder.onclick = () => FilesModule.openFolder();
 
@@ -25,13 +32,10 @@ window.onload = async () => {
     if (btnConnect) {
         btnConnect.onclick = () => {
             const input = document.getElementById('peer-id-input');
-            if (input && input.value) {
-                P2PModule.connect(input.value, handleData);
-            }
+            if (input && input.value) P2PModule.connect(input.value, handleData);
         };
     }
 
-    // SINCRONIZAÇÃO: Quando QUALQUER UM digitar, envia para o outro
     EditorModule.instance.onDidChangeModelContent(() => {
         if (!isRemoteUpdate) {
             P2PModule.send({
