@@ -1,13 +1,12 @@
 const FilesModule = {
     folderHandle: null,
+    currentFileHandle: null, // Guarda o arquivo que está aberto agora
 
     async openFolder() {
         try {
             this.folderHandle = await window.showDirectoryPicker();
             const files = await this.getFilesList();
             this.renderFileList(files);
-            
-            // Envia a lista para o Client
             P2PModule.send({ type: 'FOLDER_SYNC', files: files });
         } catch (err) { console.warn("Acesso negado."); }
     },
@@ -28,9 +27,45 @@ const FilesModule = {
             const li = document.createElement('li');
             li.innerText = "📄 " + fileName;
             li.style.cursor = "pointer";
-            li.onclick = () => this.requestFile(fileName);
+            li.onclick = () => this.loadFileByName(fileName); // Mudamos para carregar e salvar
             listUI.appendChild(li);
         });
+    },
+
+    // ESTA FUNÇÃO SALVA O CONTEÚDO NO DISCO
+    async saveCurrentFile() {
+        if (!this.currentFileHandle) return;
+        try {
+            const writable = await this.currentFileHandle.createWritable();
+            await writable.write(EditorModule.instance.getValue());
+            await writable.close();
+            console.log("Arquivo salvo automaticamente!");
+        } catch (err) {
+            console.error("Erro ao salvar:", err);
+        }
+    },
+
+    async loadFileByName(fileName) {
+        if (!this.folderHandle) return;
+
+        // 1. ANTES DE TROCAR, SALVA O QUE ESTAVA ABERTO
+        await this.saveCurrentFile();
+
+        try {
+            // 2. ABRE O NOVO ARQUIVO
+            this.currentFileHandle = await this.folderHandle.getFileHandle(fileName);
+            const file = await this.currentFileHandle.getFile();
+            const content = await file.text();
+
+            // 3. ATUALIZA EDITOR E SINCRONIZA
+            EditorModule.instance.setValue(content);
+            EditorModule.setLanguage(fileName);
+            document.getElementById('active-filename').innerText = fileName;
+            
+            P2PModule.send({ type: 'FILE', name: fileName, content: content });
+        } catch (err) {
+            console.error("Erro ao carregar arquivo:", err);
+        }
     },
 
     async createFile() {
@@ -43,18 +78,5 @@ const FilesModule = {
             this.renderFileList(files);
             P2PModule.send({ type: 'FOLDER_SYNC', files: files });
         } catch (err) { console.error(err); }
-    },
-
-    async requestFile(fileName) {
-        // Se for o Host, ele lê o arquivo. Se for o Client, ele pede ao Host (opcional, aqui simplificamos)
-        if (this.folderHandle) {
-            const fileHandle = await this.folderHandle.getFileHandle(fileName);
-            const file = await fileHandle.getFile();
-            const content = await file.text();
-            EditorModule.instance.setValue(content);
-            EditorModule.setLanguage(fileName);
-            document.getElementById('active-filename').innerText = fileName;
-            P2PModule.send({ type: 'FILE', name: fileName, content: content });
-        }
     }
 };
