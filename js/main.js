@@ -11,37 +11,28 @@ window.onload = async () => {
             EditorModule.instance.setPosition(pos);
             setTimeout(() => { isRemoteUpdate = false; }, 50);
         }
-        // Quando o HOST abre uma pasta/arquivo, o CLIENT recebe aqui:
         if (data.type === 'FILE') {
             isRemoteUpdate = true;
             EditorModule.instance.setValue(data.content);
-            EditorModule.setLanguage(data.name);
-            const nameDisplay = document.getElementById('active-filename');
-            if (nameDisplay) nameDisplay.innerText = data.name;
+            EditorModule.setLanguage(data.name); // Sincroniza a linguagem no outro PC
+            document.getElementById('active-filename').innerText = data.name;
             setTimeout(() => { isRemoteUpdate = false; }, 50);
         }
     };
 
     P2PModule.init(handleData);
 
-    // Botões
-    const btnFolder = document.getElementById('open-folder-btn');
-    if (btnFolder) btnFolder.onclick = () => FilesModule.openFolder();
-
-    const btnConnect = document.getElementById('connect-btn');
-    if (btnConnect) {
-        btnConnect.onclick = () => {
-            const input = document.getElementById('peer-id-input');
-            if (input && input.value) P2PModule.connect(input.value, handleData);
-        };
-    }
+    document.getElementById('open-folder-btn').onclick = () => FilesModule.openFolder();
+    document.getElementById('create-file-btn').onclick = () => FilesModule.createFile();
+    
+    document.getElementById('connect-btn').onclick = () => {
+        const id = document.getElementById('peer-id-input').value;
+        if(id) P2PModule.connect(id, handleData);
+    };
 
     EditorModule.instance.onDidChangeModelContent(() => {
         if (!isRemoteUpdate) {
-            P2PModule.send({
-                type: 'SYNC',
-                content: EditorModule.instance.getValue()
-            });
+            P2PModule.send({ type: 'SYNC', content: EditorModule.instance.getValue() });
         }
     });
 };
