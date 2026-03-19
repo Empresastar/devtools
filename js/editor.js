@@ -13,5 +13,10 @@ const EditorModule = {
                 resolve();
             });
         });
+    },
+    setLanguage(filename) {
+        const ext = filename.split('.').pop();
+        const map = { html: 'html', css: 'css', js: 'javascript' };
+        monaco.editor.setModelLanguage(this.instance.getModel(), map[ext] || 'javascript');
     }
 };
