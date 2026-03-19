@@ -3,37 +3,46 @@ const FilesModule = {
 
     async openFolder() {
         try {
-            // Abre o seletor de pastas do sistema
             this.folderHandle = await window.showDirectoryPicker();
-            const listUI = document.getElementById('file-list');
-            if (listUI) listUI.innerHTML = "";
-            
-            for await (const entry of this.folderHandle.values()) {
-                if (entry.kind === 'file') {
-                    const li = document.createElement('li');
-                    li.innerHTML = `<span>📄</span> ${entry.name}`;
-                    li.style.cursor = "pointer";
-                    li.onclick = () => this.loadFile(entry);
-                    if (listUI) listUI.appendChild(li);
-                }
+            await this.renderFileList();
+        } catch (err) { console.log("Ação cancelada."); }
+    },
+
+    async renderFileList() {
+        const listUI = document.getElementById('file-list');
+        if (!listUI) return;
+        listUI.innerHTML = "";
+        for await (const entry of this.folderHandle.values()) {
+            if (entry.kind === 'file') {
+                const li = document.createElement('li');
+                li.innerText = "📄 " + entry.name;
+                li.onclick = () => this.loadFile(entry);
+                listUI.appendChild(li);
             }
-        } catch (err) {
-            console.log("Usuário cancelou a abertura da pasta.");
         }
+    },
+
+    async createFile() {
+        if (!this.folderHandle) return alert("Abra uma pasta primeiro!");
+        
+        const fileName = prompt("Digite o nome com a extensão (ex: index.html, style.css, app.py):");
+        if (!fileName) return;
+
+        try {
+            const fileHandle = await this.folderHandle.getFileHandle(fileName, { create: true });
+            await this.renderFileList();
+            await this.loadFile(fileHandle);
+        } catch (err) { alert("Erro: " + err); }
     },
 
     async loadFile(fileHandle) {
         const file = await fileHandle.getFile();
         const content = await file.text();
         
-        // Atualiza o editor local
         EditorModule.instance.setValue(content);
-        EditorModule.setLanguage(fileHandle.name);
-        
-        const nameDisplay = document.getElementById('active-filename');
-        if (nameDisplay) nameDisplay.innerText = fileHandle.name;
+        EditorModule.setLanguage(fileHandle.name); // Define a cor baseada no nome
+        document.getElementById('active-filename').innerText = fileHandle.name;
 
-        // ENVIA PARA O CLIENT: Avisa que um arquivo novo foi aberto
         P2PModule.send({
             type: 'FILE',
             name: fileHandle.name,
