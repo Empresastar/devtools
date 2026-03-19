@@ -19,8 +19,9 @@ const EditorModule = {
 
     setLanguage(filename) {
         const ext = filename.split('.').pop();
-        const map = { 'html': 'html', 'css': 'css', 'js': 'javascript', 'json': 'json' };
-        monaco.editor.setModelLanguage(this.instance.getModel(), map[ext] || 'javascript');
+        const map = { html: 'html', css: 'css', js: 'javascript', json: 'json' };
+        const lang = map[ext] || 'javascript';
+        monaco.editor.setModelLanguage(this.instance.getModel(), lang);
     },
 
     runPreview() {
