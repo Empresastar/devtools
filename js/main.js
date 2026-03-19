@@ -1,22 +1,19 @@
 window.onload = async () => {
-    let isRemoteUpdate = false; // Bloqueio para evitar loop de sincronização
+    let isRemoteUpdate = false; 
 
     // 1. Inicia o Editor
     await EditorModule.init('monaco-editor');
 
-    // 2. Inicia o P2P e define o que fazer ao receber dados do outro
+    // 2. Inicia o P2P e diz o que fazer com os dados recebidos
     P2PModule.init((data) => {
-        if (data.type === 'SYNC_CODE') {
-            isRemoteUpdate = true; // Trava o envio local
-            
-            const currentPosition = EditorModule.instance.getPosition();
+        if (data.type === 'SYNC') {
+            isRemoteUpdate = true; // Trava o envio para não dar loop
+            const pos = EditorModule.instance.getPosition();
             EditorModule.instance.setValue(data.content);
-            EditorModule.instance.setPosition(currentPosition); // Mantém o cursor onde estava
-            
-            isRemoteUpdate = false; // Destrava
+            EditorModule.instance.setPosition(pos); // Mantém o mouse no lugar
+            isRemoteUpdate = false;
         }
-        
-        if (data.type === 'FILE_OPENED') {
+        if (data.type === 'FILE') {
             isRemoteUpdate = true;
             EditorModule.instance.setValue(data.content);
             EditorModule.setLanguage(data.name);
@@ -25,24 +22,22 @@ window.onload = async () => {
         }
     });
 
-    // 3. Captura cada mudança no código (como se fosse um chat de texto)
-    EditorModule.instance.onDidChangeModelContent(() => {
-        if (!isRemoteUpdate) {
-            P2PModule.send({
-                type: 'SYNC_CODE',
-                content: EditorModule.instance.getValue()
-            });
-        }
-    });
-
-    // 4. Configura os botões da Interface
+    // 3. Botões
     document.getElementById('open-folder-btn').onclick = () => FilesModule.openFolder();
     document.getElementById('preview-btn').onclick = () => EditorModule.runPreview();
     
     document.getElementById('connect-btn').onclick = () => {
-        const targetId = document.getElementById('peer-id-input').value;
-        P2PModule.connect(targetId, (data) => {
-            // A lógica de recebimento é a mesma do init
-        });
+        const id = document.getElementById('peer-id-input').value;
+        P2PModule.connect(id, (data) => { /* Processa igual ao init */ });
     };
+
+    // 4. ENVIA O CÓDIGO ENQUANTO VOCÊ DIGITA
+    EditorModule.instance.onDidChangeModelContent(() => {
+        if (!isRemoteUpdate) {
+            P2PModule.send({
+                type: 'SYNC',
+                content: EditorModule.instance.getValue()
+            });
+        }
+    });
 };
