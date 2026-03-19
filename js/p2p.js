@@ -1,28 +1,44 @@
 const P2PModule = {
     peer: null,
     connection: null,
+
     init(onDataReceived) {
         this.peer = new Peer();
         this.peer.on('open', (id) => {
             const el = document.getElementById('display-id');
             if (el) el.innerText = id;
         });
-        this.peer.on('connection', (conn) => this.setupConn(conn, onDataReceived));
+
+        this.peer.on('connection', (conn) => {
+            this.setupConn(conn, onDataReceived);
+        });
+
+        this.peer.on('error', (err) => {
+            console.error("Erro no PeerJS:", err);
+        });
     },
+
     connect(targetId, onDataReceived) {
+        if (!targetId) return alert("Digite o ID!");
         const conn = this.peer.connect(targetId);
         this.setupConn(conn, onDataReceived);
     },
+
     setupConn(conn, onDataReceived) {
         this.connection = conn;
         conn.on('open', () => {
             const st = document.getElementById('sync-status');
-            if (st) st.innerText = "🟢 Sincronizado";
-            alert("Conectado com sucesso!");
+            if (st) {
+                st.innerText = "🟢 Sincronizado";
+                st.style.color = "#00ffcc";
+            }
         });
         conn.on('data', (data) => onDataReceived(data));
     },
+
     send(data) {
-        if (this.connection && this.connection.open) this.connection.send(data);
+        if (this.connection && this.connection.open) {
+            this.connection.send(data);
+        }
     }
 };
