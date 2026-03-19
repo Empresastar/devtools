@@ -3,23 +3,29 @@ const P2PModule = {
     connection: null,
 
     init(onDataReceived) {
+        // Cria o ID PeerJS
         this.peer = new Peer();
 
         this.peer.on('open', (id) => {
-            const display = document.getElementById('display-id');
-            if (display) display.innerText = id;
+            console.log("Meu ID:", id);
+            const el = document.getElementById('display-id');
+            if (el) el.innerText = id;
         });
 
-        // Quando alguém conecta no seu ID
+        // Escuta quem tenta conectar em você
         this.peer.on('connection', (conn) => {
             this.setupConn(conn, onDataReceived);
         });
 
-        this.peer.on('error', (err) => console.error("Erro P2P:", err));
+        this.peer.on('error', (err) => {
+            console.error("Erro no PeerJS:", err);
+            const el = document.getElementById('display-id');
+            if (el) el.innerText = "Erro!";
+        });
     },
 
     connect(targetId, onDataReceived) {
-        if (!targetId) return alert("Insira o ID do parceiro!");
+        if (!targetId) return alert("Cadê o ID do amigo?");
         const conn = this.peer.connect(targetId);
         this.setupConn(conn, onDataReceived);
     },
@@ -28,15 +34,18 @@ const P2PModule = {
         this.connection = conn;
         
         conn.on('open', () => {
+            console.log("Conectado!");
             const status = document.getElementById('sync-status');
             if (status) {
-                status.innerText = "🟢 Sincronizado";
-                status.style.color = "#00ffcc";
+                status.innerText = "🟢 Conectado";
+                status.style.background = "#28a745";
             }
-            console.log("Sistema de Sincronização Ativo!");
+            alert("Conectado com sucesso!");
         });
 
-        conn.on('data', (data) => onDataReceived(data));
+        conn.on('data', (data) => {
+            onDataReceived(data);
+        });
     },
 
     send(data) {
